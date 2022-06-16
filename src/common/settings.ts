@@ -36,7 +36,7 @@ export async function getExtensionSettings(namespace: string, includeInterpreter
 }
 
 export function checkIfConfigurationChanged(e: ConfigurationChangeEvent, namespace: string): boolean {
-    const settings = [`${namespace}.trace`, `${namespace}.args`, `${namespace}.severity`, `${namespace}.path`];
+    const settings = [`${namespace}.trace`, `${namespace}.args`, `${namespace}.path`];
     const changed = settings.map((s) => e.affectsConfiguration(s));
     return changed.includes(true);
 }
