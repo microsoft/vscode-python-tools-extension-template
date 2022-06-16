@@ -10,7 +10,7 @@ TypeScript for adding new settings and commands. If you need to add new settings
 
 We are here to help, and you can ask us for input.
 
-## What do i need to have?
+## What do I need to have?
 
 You will need the following things:
 
@@ -23,7 +23,7 @@ You should know to create and work with a python virtual environment.
 
 ## How do I build and extension for my favorite tool?
 
-** This is not ready yet **
+**This is not ready yet**
 
 1. Create a new repository for your new extension.
 1. Copy the contents of this template into your new repo.
@@ -66,7 +66,7 @@ See `src\test\python_tests\test_server.py` for starting point. See, other referr
 
 Run `nom run vsce-package` from terminal. That should build a package that you can upload to the market place.
 
-## Trouble Shooting
+## Troubleshooting
 
 ### Changing path or name of `server.py` something else.
 
