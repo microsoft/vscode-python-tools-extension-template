@@ -17,7 +17,7 @@ You will need the following things:
 1. VS Code
 1. Python 3.7 or greater
 1. node >= 14.19.0
-1. npm >= 8.3.0 (node comes with npm 6.\* use `npm install -g npm@8.3.0` to update)
+1. npm >= 8.3.0 (check npm version, use `npm install -g npm@8.3.0` to update)
 
 You should know to create and work with a python virtual environment.
 
@@ -64,7 +64,7 @@ See `src\test\python_tests\test_server.py` for starting point. See, other referr
 
 ## How do I package for publishing on marketplace?
 
-Run `nom run vsce-package` from terminal. That should build a package that you can upload to the market place.
+Run `npm run vsce-package` from terminal. That should build a package that you can upload to the market place.
 
 ## Troubleshooting
 
