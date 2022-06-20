@@ -2,38 +2,35 @@
 
 This is a template repository to get you started on building a VS Code extension for your favorite python tool. It code be a linter, formatter, or code analysis, or all of them together. This template we give you the basic building blocks you need to build a VS Code extension for it.
 
-## Which languages do you need to know?
+## Programming Languages and Frameworks
 
-Python for the most part. A major part of the what you need to do to integrate your tool into this template exists in python parts of the template.
+The extension template has two parts, the extension part and language server part. The extension part is written in TypeScript, and language server part is written in Python over the `pygls` (Python language server) library.
 
-TypeScript for adding new settings and commands. If you need to add new settings to support your tool, you will have to work with a bit of TypeScript. The extension has examples for various settings you can follow that. You can also look at extensions developed by our team for some of the popular tools as reference.
+For the most part you will be working on the python part of the code when using this template. You will be integrating your tool with the extension part using the [Language Server Protocol](https://microsoft.github.io/language-server-protocol). `pygls` currently works on the version 3.16 of LSP.
 
-We are here to help, and you can ask us for input.
+The TypeScript part handles working with VS Code and its UI. The extension template comes with few settings pre configured that can be used by your tool. If you need to add new settings to support your tool, you will have to work with a bit of TypeScript. The extension has examples for few settings that you can follow. You can also look at extensions developed by our team for some of the popular tools as reference.
 
-## What do I need to have?
+## Requirements
 
-You will need the following things:
-
-1. VS Code
+1. VS Code 1.64.0 or greater
 1. Python 3.7 or greater
 1. node >= 14.19.0
 1. npm >= 8.3.0 (check npm version, use `npm install -g npm@8.3.0` to update)
+1. Python extension for VS Code
 
 You should know to create and work with a python virtual environment.
 
-## How do I setup the template for my favorite tool?
+## Getting Started
 
-1. Create a new repository for your new extension.
-1. Copy the contents of this template into your new repo.
-1. Create and activate the virtual environment for this project in a terminal. Be sure to use the minimum version of python for your tool. This template was written to handle python 3.7 or greater.
-1. Add your favorite tool to `requirements.in`, and `pip-compile` it to generate `requirements.txt`. See `requirements.in` file for more details.
-1. `pip-compile` test requirements as well. See `src/test/python_tests/requirements.in`.
-1. Install `nox` into your python environment.
-    1. Run this to install all dependencies needed for your tool in a packageable way `nox --session install_bundled_libs`.
-    1. Run this to install all test dependencies: `python -m pip install -r src/test/python_tests/requirements.txt`.
+1. Copy the contents of this template into your new project folder.
+1. Create and activate a python virtual environment for this project in a terminal. Be sure to use the minimum version of python for your tool. This template was written to handle python 3.7 or greater.
+1. Install `nox` in the activated environment.
+1. Add your favorite tool to `requirements.in`
+1. Run `nox --session setup`.
+1. Run this to install all test dependencies `python -m pip install -r src/test/python_tests/requirements.txt`.
 1. Open `package.json`, look for and update the following things:
-    1. Find and replace (case-sensitive) `<pytool>` with `yourtool`. This is used as module name.
-    1. Find and replace (case-sensitive) `<PyTool>` with `Your Tool`. This is used as display and title name.
+    1. Find and replace (case-sensitive) `<pytool>` with `mytool`. This is used as module name.
+    1. Find and replace (case-sensitive) `<PyTool>` with `My Tool`. This is used as display and title name.
     1. Check the following fields and update them accordingly:
         - `"publisher"`: Update this to your publisher id from https://marketplace.visualstudio.com/.
         - `"version"`: See https://semver.org/ for details of requirements and limitations for this field.
@@ -44,25 +41,37 @@ You should know to create and work with a python virtual environment.
     1. **Optional** Add `"icon"` field with relative path to a image file to use as icon for this project.
 1. Install node packages using `npm install`.
 
-## Where do I add features from my favorite tool?
+## Features of this Template
 
-1. Open `bundled/tool/server.py`, here is where you will do most of the work.
-    - Protocol reference: https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification/
-    - Implementation showing how to handle Linting on file `open`, `save`, and `close`. [Pylint](https://github.com/microsoft/vscode-pylint/blob/main/bundled/linter)
-    - Implementation showing how to handle Formatting. [Black Formatter](https://github.com/microsoft/vscode-black-formatter/blob/main/bundled/formatter)
-    - Implementation showing how to handle Code Actions. [isort](https://github.com/microsoft/vscode-isort/blob/main/bundled/formatter)
+This template will after finishing the getting started part would have added the following:
 
-Note: the template automatically adds a restart server command, and few common settings like trace, args, and path.
+1. A command `My Tool: Restart Server`.
+1. Following setting:
+    - `mytool.trace`
+    - `mytool.args`
+    - `mytool.path`
+1. Following triggers for extension activation:
+    - On Language `python`.
+    - On File with `.py` extension found in the opened workspace.
 
-## How do I build and run the extension?
+## Adding features from your tool
 
-1. This you will need to do any time you add a new tool or want to update the version:
-    1. Install `nox` into your python environment.
-    1. Ensure that your `requirements.txt` is up to date.
-    1. Run `nox --session install_bundled_libs` to bundle your tool with the extension.
-1. Run the `Debug Extension and Python` configuration form VS Code. That should build and debug the extension in host window.
+Open `bundled/tool/server.py`, here is where you will do most of the work. Look for `TODO` comments there for more details.
 
-## How do I debug the extension?
+References:
+
+-   Protocol reference: https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification/
+-   Implementation showing how to handle Linting on file `open`, `save`, and `close`. [Pylint](https://github.com/microsoft/vscode-pylint/blob/main/bundled/linter)
+-   Implementation showing how to handle Formatting. [Black Formatter](https://github.com/microsoft/vscode-black-formatter/blob/main/bundled/formatter)
+-   Implementation showing how to handle Code Actions. [isort](https://github.com/microsoft/vscode-isort/blob/main/bundled/formatter)
+
+## Building and Run the extension
+
+Run the `Debug Extension and Python` configuration form VS Code. That should build and debug the extension in host window.
+
+Note: if you just want to build you can run the build task in VS Code (`ctrl`+`shift`+`B`)
+
+## Debugging
 
 To debug both TypeScript and Python code use `Debug Extension and Python` debug config.
 
@@ -70,17 +79,34 @@ To debug only TypeScript code, use `Debug Extension` debug config.
 
 To debug a already running server or in production server, use `Python Attach`, and select the process that is running `server.py`.
 
-## How do I add new settings?
+## Adding new Settings or Commands
 
 You can add settings by contributing a configuration in `package.json` file. To pass this configuration to your python tool server (i.e, `server.py`) update the `settings.ts` as need. There are examples of different types of settings in that file that you can base your new setting on.
 
-## How do I write tests?
+You can follow how `restart` command is implemented in `package.json` and `extension.ts` for how to add commands. You cam also contribute commands from Python via the Language Server Protocol.
+
+## Testing
 
 See `src\test\python_tests\test_server.py` for starting point. See, other referred projects here for testing various aspects of running the tool over LSP.
 
-## How do I package for publishing on marketplace?
+If you have installed the test requirements you should be able to see the tests in the test explorer.
 
-Run `npm run vsce-package` from terminal. That should build a package that you can upload to the marketplace. Ensure that you have updated all the required fields for publishing packages to marketplace.
+You can also run all tests using `nox --session tests` command.
+
+## Packaging and Publishing
+
+1. Update the version as need in `package.json`.
+1. Build package using `nox --session build_package`.
+
+## Upgrading Dependencies
+
+Dependabot yml is provided to make it easy to setup upgrading dependencies in this extension. Be sure to add the labels used in the dependabot to your repo.
+
+To manually upgrade your local project:
+
+1. Create a new branch
+1. Run `npm update` to update node modules.
+1. Run `nox --session setup` to upgrade python packages.
 
 ## Troubleshooting
 
