@@ -52,6 +52,8 @@ You should know to create and work with a python virtual environment.
     - Implementation showing how to handle Formatting. [Black Formatter](https://github.com/microsoft/vscode-black-formatter/blob/main/bundled/formatter)
     - Implementation showing how to handle Code Actions. [isort](https://github.com/microsoft/vscode-isort/blob/main/bundled/formatter)
 
+Note: the template automatically adds a restart server command, and few common settings like trace, args, and path.
+
 ## How do I build and run the extension?
 
 1. This you will need to do any time you add a new tool or want to update the version:
