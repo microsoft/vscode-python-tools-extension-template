@@ -1,6 +1,7 @@
 // Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT License.
 
+import { dirname } from 'path';
 import { Disposable, OutputChannel, WorkspaceFolder } from 'vscode';
 import { State } from 'vscode-languageclient';
 import {
@@ -11,6 +12,7 @@ import {
 } from 'vscode-languageclient/node';
 import { SERVER_SCRIPT_PATH } from './constants';
 import { traceInfo, traceVerbose } from './log/logging';
+import { getDebuggerPath } from './python';
 import { ISettings } from './settings';
 import { traceLevelToLSTrace } from './utilities';
 import { getWorkspaceFolders, isVirtualWorkspace } from './vscodeapi';
@@ -40,10 +42,20 @@ export async function createServer(
     initializationOptions: IInitOptions,
 ): Promise<LanguageClient> {
     const command = interpreter[0];
+    const env = process.env;
+    const debuggerPath = await getDebuggerPath();
+    if (env.USE_DEBUGPY && debuggerPath) {
+        env.DEBUGPY_PATH = debuggerPath;
+    } else {
+        env.USE_DEBUGPY = 'False';
+    }
     const serverOptions: ServerOptions = {
         command,
         args: interpreter.slice(1).concat([SERVER_SCRIPT_PATH]),
-        options: { cwd: getProjectRoot() },
+        options: {
+            cwd: getProjectRoot(),
+            env,
+        },
     };
 
     // Options to control the language client
