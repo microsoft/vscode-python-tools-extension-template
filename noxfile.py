@@ -4,17 +4,10 @@
 All the action we need during build
 """
 
-import json
-import pathlib
-import re
-
 import nox  # pylint: disable=import-error
 
 
-@nox.session(python="3.7")
-def install_bundled_libs(session):
-    """Installs the libraries that will be bundled with the extension."""
-    session.install("wheel")
+def _install_bundle(session: nox.Session):
     session.install(
         "-t",
         "./bundled/libs",
@@ -28,15 +21,33 @@ def install_bundled_libs(session):
     )
 
 
+def _setup_template_environment(session: nox.Session):
+    session.install("wheel", "pip-tools")
+    session.run("pip-compile", "--generate-hashes", "--upgrade", "./requirements.in")
+    session.run(
+        "pip-compile",
+        "--generate-hashes",
+        "--upgrade",
+        "./src/test/python_tests/requirements.in",
+    )
+    _install_bundle(session)
+
+
+@nox.session(python="3.7")
+def setup(session: nox.Session):
+    """Sets up the template for development."""
+    _setup_template_environment(session)
+
+
 @nox.session()
-def tests(session):
+def tests(session: nox.Session):
     """Runs all the tests for the extension."""
     session.install("-r", "src/test/python_tests/requirements.txt")
     session.run("pytest", "src/test/python_tests")
 
 
 @nox.session()
-def lint(session):
+def lint(session: nox.Session):
     """Runs linter and formatter checks on python files."""
     session.install("-r", "./requirements.txt")
     session.install("-r", "src/test/python_tests/requirements.txt")
@@ -60,3 +71,14 @@ def lint(session):
     session.run("isort", "--check", "./bundled/tool")
     session.run("isort", "--check", "./src/test/python_tests")
     session.run("isort", "--check", "noxfile.py")
+
+    # check typescript code
+    session.run("npm", "run", "lint", external=True)
+
+
+@nox.session()
+def build_package(session: nox.Session):
+    """Builds VSIX package for publishing."""
+    _setup_template_environment(session)
+    session.run("npm", "install", external=True)
+    session.run("npm", "run", "vsce-package", external=True)

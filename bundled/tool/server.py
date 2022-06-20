@@ -9,7 +9,7 @@ import json
 import os
 import pathlib
 import sys
-from typing import Optional, Sequence, Union
+from typing import List, Optional, Sequence, Union
 
 # Ensure that we can import LSP libraries, and other bundled linter libraries
 sys.path.append(str(pathlib.Path(__file__).parent.parent / "libs"))
@@ -24,9 +24,9 @@ if os.getenv("USE_DEBUGPY", None) in ["True", "TRUE", "1", "T"]:
             sys.path.append(debugger_path)
 
         import debugpy
+
         debugpy.connect(5678)
         debugpy.breakpoint()
-
 
 
 # pylint: disable=wrong-import-position,import-error
@@ -34,7 +34,6 @@ import jsonrpc
 import utils
 from pygls import lsp, protocol, server, uris, workspace
 from pygls.lsp import types
-
 
 WORKSPACE_SETTINGS = {}
 RUNNER = pathlib.Path(__file__).parent / "runner.py"
@@ -57,7 +56,8 @@ LSP_SERVER = server.LanguageServer(max_workers=MAX_WORKERS)
 
 # TODO: Update this part as needed for your tool
 TOOL_MODULE = "<pytool>"
-TOOL_ARGS = [] # default arguments always passed to your tool.
+TOOL_ARGS = []  # default arguments always passed to your tool.
+
 
 @LSP_SERVER.feature(lsp.TEXT_DOCUMENT_DID_OPEN)
 def did_open(server: server.LanguageServer, params: types.DidOpenTextDocumentParams):
@@ -68,7 +68,16 @@ def did_open(server: server.LanguageServer, params: types.DidOpenTextDocumentPar
     document = server.workspace.get_document(params.text_document.uri)
     # Use _run_tool_on_document function to run your tool on a document.
     # Use _run_tool function for general purpose running your tool.
-    pass
+
+    # Use this handler for linting on file Open. You have to publish an array of
+    # lsp.Diagnostic objects with the each capturing a problem reported by linter
+    # for that file.
+    diagnostics: List[lsp.Diagnostic] = []
+
+    # TODO: Use _run_tool_on_document to get the stdout from your tool, parse it here
+    # and create instances of lsp.Diagnostic for each issue.
+
+    LSP_SERVER.publish_diagnostics(document.uri, diagnostics)
 
 
 @LSP_SERVER.feature(lsp.TEXT_DOCUMENT_DID_SAVE)
@@ -80,14 +89,23 @@ def did_save(_server: server.LanguageServer, params: types.DidSaveTextDocumentPa
     document = server.workspace.get_document(params.text_document.uri)
     # Use _run_tool_on_document function to run your tool on a document.
     # Use _run_tool function for general purpose running your tool.
-    pass
+
+    # Use this handler for linting on file Save. You have to publish an array of
+    # lsp.Diagnostic objects with the each capturing a problem reported by linter
+    # for that file.
+    diagnostics: List[lsp.Diagnostic] = []
+
+    # TODO: Use _run_tool_on_document to get the stdout from your tool, parse it here
+    # and create instances of lsp.Diagnostic for each issue.
+
+    LSP_SERVER.publish_diagnostics(document.uri, diagnostics)
 
 
 @LSP_SERVER.feature(lsp.TEXT_DOCUMENT_DID_CLOSE)
 def did_close(_server: server.LanguageServer, params: types.DidCloseTextDocumentParams):
     """LSP handler for textDocument/didClose request."""
-    # Publishing empty diagnostics to clear the entries for this file.
     document = LSP_SERVER.workspace.get_document(params.text_document.uri)
+    # Publishing empty diagnostics to clear the entries for this file.
     LSP_SERVER.publish_diagnostics(document.uri, [])
 
 
@@ -96,6 +114,12 @@ def formatting(_server: server.LanguageServer, params: types.DocumentFormattingP
     """LSP handler for textDocument/formatting request."""
     #  Sample implementations:
     #  Black: https://github.com/microsoft/vscode-black-formatter/blob/main/bundled/formatter
+
+    # If your tool is a formatter you can use this handler to provide formatting support on save.
+    # You have to return an array of lsp.TextEdit objects, to provide your formatted results.
+    # If you provide [] array, VS Code will clear the file on all contents.
+
+    # For no changes in formatting return None.
     return None
 
 
@@ -163,20 +187,18 @@ def _get_settings_by_document(document: Optional[workspace.Document]):
 
 def _run_tool_on_document(
     document: workspace.Document,
-    use_stdin:bool = False,
+    use_stdin: bool = False,
 ) -> Union[utils.RunResult, None]:
     """Runs tool on the given document.
-    
+
     params:
-      - use_stdin: bool = Default False. When True passes the contents of the documents to the 
+      - use_stdin: bool = Default False. When True passes the contents of the documents to the
     """
     if str(document.uri).startswith("vscode-notebook-cell"):
         # Skip notebook cells
         return None
 
-    if utils.is_stdlib_file(
-        document.path
-    ):
+    if utils.is_stdlib_file(document.path):
         # Skip standard library python files.
         return None
 
@@ -210,13 +232,12 @@ def _run_tool_on_document(
         # TODO: update these to pass the appropriate arguments to pass contents to tool via stdin
         # For example, for pylint args for stdin looks like this:
         #     pylint --from-stdin <path>
-        # Here `--from-stdin` path is used by pylint to make decisions on the file contents 
-        # that are being processed. Like, applying exclusion rules. 
+        # Here `--from-stdin` path is used by pylint to make decisions on the file contents
+        # that are being processed. Like, applying exclusion rules.
         # It should look like this when you pass it:
         #     argv += ["--from-stdin", document.path]
         # Read up on how your tool handles contents via stdin. If stdin is not supported use
-         argv += []
-
+        argv += []
 
     if use_path:
         # This mode is used when running executables.
@@ -262,6 +283,7 @@ def _run_tool_on_document(
     LSP_SERVER.show_message_log(f"{document.uri} :\r\n{result.stdout}")
     return result
 
+
 def _run_tool(extra_args: Sequence[str]) -> utils.RunResult:
     """Runs tool."""
     # deep copy here to prevent accidentally updating global settings.
@@ -294,11 +316,7 @@ def _run_tool(extra_args: Sequence[str]) -> utils.RunResult:
         # This mode is used when running executables.
         LSP_SERVER.show_message_log(" ".join(argv))
         LSP_SERVER.show_message_log(f"CWD Server: {cwd}")
-        result = utils.run_path(
-            argv=argv,
-            use_stdin=True,
-            cwd=cwd
-        )
+        result = utils.run_path(argv=argv, use_stdin=True, cwd=cwd)
     elif use_rpc:
         # This mode is used if the interpreter running this server is different from
         # the interpreter used for running this server.
@@ -310,7 +328,7 @@ def _run_tool(extra_args: Sequence[str]) -> utils.RunResult:
             module=TOOL_MODULE,
             argv=argv,
             use_stdin=True,
-            cwd=cwd
+            cwd=cwd,
         )
     else:
         # In this mode the tool is run as a module in the same process as the language server.
@@ -320,17 +338,13 @@ def _run_tool(extra_args: Sequence[str]) -> utils.RunResult:
         # sys.path and that might not work for this scenario next time around.
         with utils.substitute_attr(sys, "path", sys.path[:]):
             result = utils.run_module(
-                module=TOOL_MODULE,
-                argv=argv,
-                use_stdin=True,
-                cwd=cwd
+                module=TOOL_MODULE, argv=argv, use_stdin=True, cwd=cwd
             )
 
     if result.stderr:
         LSP_SERVER.show_message_log(result.stderr, msg_type=lsp.MessageType.Error)
     LSP_SERVER.show_message_log(f"\r\n{result.stdout}\r\n")
     return result
-
 
 
 if __name__ == "__main__":
