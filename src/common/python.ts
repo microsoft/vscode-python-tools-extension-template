@@ -101,3 +101,8 @@ export async function getInterpreterDetails(resource?: Uri): Promise<IInterprete
     }
     return { path: undefined, resource };
 }
+
+export async function getDebuggerPath(): Promise<string | undefined> {
+    const api = await getPythonExtensionAPI();
+    return api?.debug.getDebuggerPackagePath();
+}
