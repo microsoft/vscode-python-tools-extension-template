@@ -15,19 +15,19 @@ The TypeScript part handles working with VS Code and its UI. The extension templ
 1. VS Code 1.64.0 or greater
 1. Python 3.7 or greater
 1. node >= 14.19.0
-1. npm >= 8.3.0 (check npm version, use `npm install -g npm@8.3.0` to update)
+1. npm >= 8.3.0 (`npm` is installed with node, check npm version, use `npm install -g npm@8.3.0` to update)
 1. Python extension for VS Code
 
-You should know to create and work with a python virtual environment.
+You should know to create and work with python virtual environments.
 
 ## Getting Started
 
 1. Copy the contents of this template into your new project folder.
 1. Create and activate a python virtual environment for this project in a terminal. Be sure to use the minimum version of python for your tool. This template was written to handle python 3.7 or greater.
-1. Install `nox` in the activated environment.
+1. Install `nox` in the activated environment: `python -m pip install nox`.
 1. Add your favorite tool to `requirements.in`
 1. Run `nox --session setup`.
-1. Run this to install all test dependencies `python -m pip install -r src/test/python_tests/requirements.txt`.
+1. Install test dependencies `python -m pip install -r src/test/python_tests/requirements.txt`.
 1. Open `package.json`, look for and update the following things:
     1. Find and replace (case-sensitive) `<pytool>` with `mytool`. This is used as module name.
     1. Find and replace (case-sensitive) `<PyTool>` with `My Tool`. This is used as display and title name.
@@ -43,7 +43,7 @@ You should know to create and work with a python virtual environment.
 
 ## Features of this Template
 
-This template will after finishing the getting started part would have added the following:
+After finishing the getting started part, this template would have added the following:
 
 1. A command `My Tool: Restart Server`.
 1. Following setting:
@@ -93,10 +93,17 @@ If you have installed the test requirements you should be able to see the tests 
 
 You can also run all tests using `nox --session tests` command.
 
+## Linting
+
+Run `nox --session lint` to run linting on both Python and TypeScript code. Please update the nox file if you want to use a different linter and formatter.
+
 ## Packaging and Publishing
 
 1. Update the version as need in `package.json`.
 1. Build package using `nox --session build_package`.
+1. Take the generated `.vsix` file and upload it to your extension management page https://marketplace.visualstudio.com/manage.
+
+To do this from the command line see here https://code.visualstudio.com/api/working-with-extensions/publishing-extension
 
 ## Upgrading Dependencies
 
@@ -108,15 +115,15 @@ To manually upgrade your local project:
 1. Run `npm update` to update node modules.
 1. Run `nox --session setup` to upgrade python packages.
 
-## Troubleshooting
+# Troubleshooting
 
-### Changing path or name of `server.py` something else.
+## Changing path or name of `server.py` something else.
 
 If you want to change the name of `server.py` to something else, you can. Be sure to update `constants.ts` and `src\test\python_tests\lsp_test_client\session.py`.
 
 Also make sure that the inserted paths in `server.py` are pointing to the right folders to pick up the dependent packages.
 
-### Module not found errors.
+## Module not found errors.
 
 This can occurs if `bundled/libs` is empty. That is the folder where we put your tool and other dependencies. Be sure to follow the build steps need for creating and bundling the required libs.
 
