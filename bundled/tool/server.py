@@ -12,23 +12,39 @@ import sys
 from typing import List, Optional, Sequence, Union
 
 # Ensure that we can import LSP libraries, and other bundled linter libraries
-sys.path.append(str(pathlib.Path(__file__).parent.parent / "libs"))
+sys.path.append(os.fspath(pathlib.Path(__file__).parent.parent / "libs"))
 
 # Ensure debugger is loaded before we load anything else
 if os.getenv("USE_DEBUGPY", None) in ["True", "TRUE", "1", "T"]:
     debugger_path = os.getenv("DEBUGPY_PATH", None)
     if debugger_path:
         if debugger_path.endswith("debugpy"):
-            sys.path.append(str(pathlib.Path(debugger_path).parent))
+            sys.path.append(os.fspath(pathlib.Path(debugger_path).parent))
         else:
             sys.path.append(debugger_path)
 
         import debugpy
 
+        # 5678 is the default port, If you need to change it update it here
+        # and in launch.json
         debugpy.connect(5678)
+
+        # This will ensure that execution is paused as soon as the debugger
+        # connects to VS Code. If you don't want to pause here comment this
+        # line and set breakpoints as appropriate.
         debugpy.breakpoint()
 
+        # TODO: Remove this block entirely to remove debugging support.
+        # This was added for convenience to debug extension and python parts.
+        # You can always debug using attach to process, even if you remove
+        # this block of code.
+        # NOTE: The above way of attaching debugger allows you to debug
+        # any subprocess launched by this server. If you remove this code
+        # you will have to manually attach to each process when debugging.
 
+# **********************************************************
+# Imports needed for the language server goes below this.
+# **********************************************************
 # pylint: disable=wrong-import-position,import-error
 import jsonrpc
 import utils
@@ -117,7 +133,7 @@ def formatting(_server: server.LanguageServer, params: types.DocumentFormattingP
 
     # If your tool is a formatter you can use this handler to provide formatting support on save.
     # You have to return an array of lsp.TextEdit objects, to provide your formatted results.
-    # If you provide [] array, VS Code will clear the file on all contents.
+    # If you provide [] array, VS Code will clear the file of all contents.
 
     # For no changes in formatting return None.
     return None
@@ -185,6 +201,9 @@ def _get_settings_by_document(document: Optional[workspace.Document]):
     return WORKSPACE_SETTINGS[str(document_workspace)]
 
 
+# *****************************************************
+# Internal execution APIs
+# *****************************************************
 def _run_tool_on_document(
     document: workspace.Document,
     use_stdin: bool = False,
@@ -195,10 +214,12 @@ def _run_tool_on_document(
       - use_stdin: bool = Default False. When True passes the contents of the documents to the
     """
     if str(document.uri).startswith("vscode-notebook-cell"):
+        # TODO: Decide on if you want to skip notebook cells.
         # Skip notebook cells
         return None
 
     if utils.is_stdlib_file(document.path):
+        # TODO: Decide on if you want to skip standard library files.
         # Skip standard library python files.
         return None
 
@@ -229,7 +250,8 @@ def _run_tool_on_document(
     argv += TOOL_ARGS + settings["args"]
 
     if use_stdin:
-        # TODO: update these to pass the appropriate arguments to pass contents to tool via stdin
+        # TODO: update these to pass the appropriate arguments to provide document contents
+        # to tool via stdin.
         # For example, for pylint args for stdin looks like this:
         #     pylint --from-stdin <path>
         # Here `--from-stdin` path is used by pylint to make decisions on the file contents
@@ -237,6 +259,7 @@ def _run_tool_on_document(
         # It should look like this when you pass it:
         #     argv += ["--from-stdin", document.path]
         # Read up on how your tool handles contents via stdin. If stdin is not supported use
+        # set use_stdin to False, or provide path, what ever is appropriate for your tool.
         argv += []
 
     if use_path:

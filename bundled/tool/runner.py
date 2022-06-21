@@ -4,12 +4,13 @@
 Runner to use when running under a different interpreter.
 """
 
+import os
 import pathlib
 import sys
 import traceback
 
 # Ensure that we can import LSP libraries, and other bundled libraries
-sys.path.append(str(pathlib.Path(__file__).parent.parent / "libs"))
+sys.path.append(os.fspath(pathlib.Path(__file__).parent.parent / "libs"))
 
 # pylint: disable=wrong-import-position,import-error
 import jsonrpc
