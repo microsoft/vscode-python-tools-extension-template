@@ -61,15 +61,13 @@ def get_initialization_options():
     server_id = server_info["module"]
 
     properties = package_json["contributes"]["configuration"]["properties"]
-    settings = [
-        {
-            "trace": "error",
-            "args": [],
-            "severity": properties[f"{server_id}.severity"]["default"],
-            "path": [],
-            "workspace": as_uri(str(PROJECT_ROOT)),
-            "interpreter": [],
-        }
-    ]
+    setting = {}
+    for property in properties:
+        name = property[len(server_id)+1:]
+        value = properties[property]["default"]
+        setting[name] = value
 
-    return {"settings": settings}
+    setting["workspace"] =  as_uri(str(PROJECT_ROOT))
+    setting["interpreter"] = []
+
+    return {"settings": [setting]}

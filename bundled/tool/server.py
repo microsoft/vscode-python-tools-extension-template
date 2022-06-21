@@ -63,7 +63,7 @@ LSP_SERVER = server.LanguageServer(max_workers=MAX_WORKERS)
 # **********************************************************
 
 # Reference:
-#  LS Protocol: https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification/
+#  LS Protocol: https://microsoft.github.io/language-server-protocol/specifications/specification-3-16/
 #
 #  Sample implementations:
 #  Pylint: https://github.com/microsoft/vscode-pylint/blob/main/bundled/linter
