@@ -31,7 +31,7 @@
             }
         },
         {
-            "name": "DO NOT SELECT (only for python tests run via test explorer)",
+            "name": "Python Config for test explorer (hidden)",
             "type": "python",
             "request": "launch",
             "console": "integratedTerminal",
@@ -44,7 +44,7 @@
             }
         },
         {
-            "name": "DO NOT SELECT (Debug Extension With Python Code)",
+            "name": "Debug Extension (hidden)",
             "type": "extensionHost",
             "request": "launch",
             "args": ["--extensionDevelopmentPath=${workspaceFolder}"],
@@ -59,7 +59,7 @@
             }
         },
         {
-            "name": "DO NOT SELECT (Python listen)",
+            "name": "Python debug server (hidden)",
             "type": "python",
             "request": "attach",
             "listen": { "host": "localhost", "port": 5678 },
@@ -74,7 +74,7 @@
     "compounds": [
         {
             "name": "Debug Extension and Python",
-            "configurations": ["DO NOT SELECT (Python listen)", "DO NOT SELECT (Debug Extension With Python Code)"],
+            "configurations": ["Python debug server (hidden)", "Debug Extension (hidden)"],
             "stopAll": true,
             "preLaunchTask": "npm: watch",
             "presentation": {
