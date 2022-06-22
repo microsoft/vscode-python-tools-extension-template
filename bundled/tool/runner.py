@@ -9,7 +9,7 @@ import pathlib
 import sys
 import traceback
 
-# Ensure that we can import LSP libraries, and other bundled libraries
+# Ensure that we can import LSP libraries, and other bundled libraries.
 sys.path.append(os.fspath(pathlib.Path(__file__).parent.parent / "libs"))
 
 # pylint: disable=wrong-import-position,import-error
@@ -33,6 +33,10 @@ while not EXIT_NOW:
         # next time around.
         with utils.substitute_attr(sys, "path", sys.path[:]):
             try:
+                # TODO: `utils.run_module` is equivalent to running `python -m <pytool>`.
+                # If your tool supports a programmatic API then replace the function below
+                # with code for your tool. Also update `_run_tool_on_document` function and
+                # `_run_tool` in `server.py`.
                 result = utils.run_module(
                     module=msg["module"],
                     argv=msg["argv"],

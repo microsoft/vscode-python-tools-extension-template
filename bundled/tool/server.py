@@ -11,10 +11,10 @@ import pathlib
 import sys
 from typing import List, Optional, Sequence, Union
 
-# Ensure that we can import LSP libraries, and other bundled linter libraries
+# Ensure that we can import LSP libraries, and other bundled linter libraries.
 sys.path.append(os.fspath(pathlib.Path(__file__).parent.parent / "libs"))
 
-# Ensure debugger is loaded before we load anything else
+# Ensure debugger is loaded before we load anything else.
 if os.getenv("USE_DEBUGPY", None) in ["True", "TRUE", "1", "T"]:
     debugger_path = os.getenv("DEBUGPY_PATH", None)
     if debugger_path:
@@ -26,7 +26,7 @@ if os.getenv("USE_DEBUGPY", None) in ["True", "TRUE", "1", "T"]:
         import debugpy
 
         # 5678 is the default port, If you need to change it update it here
-        # and in launch.json
+        # and in launch.json.
         debugpy.connect(5678)
 
         # This will ensure that execution is paused as soon as the debugger
@@ -59,7 +59,7 @@ LSP_SERVER = server.LanguageServer(max_workers=MAX_WORKERS)
 
 
 # **********************************************************
-# Tool specific code goes here
+# Tool specific code goes here.
 # **********************************************************
 
 # Reference:
@@ -70,7 +70,7 @@ LSP_SERVER = server.LanguageServer(max_workers=MAX_WORKERS)
 #  Black: https://github.com/microsoft/vscode-black-formatter/blob/main/bundled/formatter
 #  isort: https://github.com/microsoft/vscode-isort/blob/main/bundled/formatter
 
-# TODO: Update this part as needed for your tool
+# TODO: Update TOOL_MODULE and TOOL_ARGS as needed for your tool.
 TOOL_MODULE = "<pytool>"
 TOOL_ARGS = []  # default arguments always passed to your tool.
 
@@ -97,7 +97,7 @@ def did_open(server: server.LanguageServer, params: types.DidOpenTextDocumentPar
 
 
 @LSP_SERVER.feature(lsp.TEXT_DOCUMENT_DID_SAVE)
-def did_save(_server: server.LanguageServer, params: types.DidSaveTextDocumentParams):
+def did_save(server: server.LanguageServer, params: types.DidSaveTextDocumentParams):
     """LSP handler for textDocument/didSave request."""
     #  Sample implementations:
     #  Pylint: https://github.com/microsoft/vscode-pylint/blob/main/bundled/linter
@@ -114,19 +114,19 @@ def did_save(_server: server.LanguageServer, params: types.DidSaveTextDocumentPa
     # TODO: Use _run_tool_on_document to get the stdout from your tool, parse it here
     # and create instances of lsp.Diagnostic for each issue.
 
-    LSP_SERVER.publish_diagnostics(document.uri, diagnostics)
+    server.publish_diagnostics(document.uri, diagnostics)
 
 
 @LSP_SERVER.feature(lsp.TEXT_DOCUMENT_DID_CLOSE)
-def did_close(_server: server.LanguageServer, params: types.DidCloseTextDocumentParams):
+def did_close(server: server.LanguageServer, params: types.DidCloseTextDocumentParams):
     """LSP handler for textDocument/didClose request."""
-    document = LSP_SERVER.workspace.get_document(params.text_document.uri)
+    document = server.workspace.get_document(params.text_document.uri)
     # Publishing empty diagnostics to clear the entries for this file.
-    LSP_SERVER.publish_diagnostics(document.uri, [])
+    server.publish_diagnostics(document.uri, [])
 
 
 @LSP_SERVER.feature(lsp.FORMATTING)
-def formatting(_server: server.LanguageServer, params: types.DocumentFormattingParams):
+def formatting(server: server.LanguageServer, params: types.DocumentFormattingParams):
     """LSP handler for textDocument/formatting request."""
     #  Sample implementations:
     #  Black: https://github.com/microsoft/vscode-black-formatter/blob/main/bundled/formatter
@@ -140,7 +140,7 @@ def formatting(_server: server.LanguageServer, params: types.DocumentFormattingP
 
 
 # **********************************************************
-# Required Language Server Initialization and Exit handlers
+# Required Language Server Initialization and Exit handlers.
 # **********************************************************
 @LSP_SERVER.feature(lsp.INITIALIZE)
 def initialize(params: types.InitializeParams):
@@ -175,7 +175,7 @@ def on_exit():
 
 
 # *****************************************************
-# Internal settings management APIs
+# Internal settings management APIs.
 # *****************************************************
 def _update_workspace_settings(settings):
     for setting in settings:
@@ -202,7 +202,7 @@ def _get_settings_by_document(document: Optional[workspace.Document]):
 
 
 # *****************************************************
-# Internal execution APIs
+# Internal execution APIs.
 # *****************************************************
 def _run_tool_on_document(
     document: workspace.Document,
@@ -293,6 +293,10 @@ def _run_tool_on_document(
         # This is needed to preserve sys.path, in cases where the tool modifies
         # sys.path and that might not work for this scenario next time around.
         with utils.substitute_attr(sys, "path", sys.path[:]):
+            # TODO: `utils.run_module` is equivalent to running `python -m <pytool>`.
+            # If your tool supports a programmatic API then replace the function below
+            # with code for your tool. Also update `_run_tool` function and
+            # `utils.run_module` in `runner.py`.
             result = utils.run_module(
                 module=TOOL_MODULE,
                 argv=argv,
@@ -360,6 +364,10 @@ def _run_tool(extra_args: Sequence[str]) -> utils.RunResult:
         # This is needed to preserve sys.path, in cases where the tool modifies
         # sys.path and that might not work for this scenario next time around.
         with utils.substitute_attr(sys, "path", sys.path[:]):
+            # TODO: `utils.run_module` is equivalent to running `python -m <pytool>`.
+            # If your tool supports a programmatic API then replace the function below
+            # with code for your tool. Also update `_run_tool_on_document` function and
+            # `utils.run_module` in `runner.py`.
             result = utils.run_module(
                 module=TOOL_MODULE, argv=argv, use_stdin=True, cwd=cwd
             )
