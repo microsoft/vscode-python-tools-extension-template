@@ -22,23 +22,15 @@ You should know to create and work with python virtual environments.
 
 ## Getting Started
 
-1. Copy the contents of this template into your new project folder.
-1. Create and activate a python virtual environment for this project in a terminal. Be sure to use the minimum version of python for your tool. This template was written to handle python 3.7 or greater.
+1. Copy the contents of this template into your new project folder. Or, use this template while creating repo.
+1. Create and activate a python virtual environment for this project in a terminal. Be sure to use the minimum version of python for your tool. This template was written to work with python 3.7 or greater.
 1. Install `nox` in the activated environment: `python -m pip install nox`.
 1. Add your favorite tool to `requirements.in`
 1. Run `nox --session setup`.
 1. Install test dependencies `python -m pip install -r src/test/python_tests/requirements.txt`.
 1. Open `package.json`, look for and update the following things:
-    1. Find and replace (case-sensitive) `<pytool>` with `mytool`. This is used as module name.
-    1. Find and replace (case-sensitive) `<PyTool>` with `My Tool`. This is used as display and title name.
-    1. Check the following fields and update them accordingly:
-        - `"publisher"`: Update this to your publisher id from https://marketplace.visualstudio.com/.
-        - `"version"`: See https://semver.org/ for details of requirements and limitations for this field.
-        - `"license"`: Update license as per your project. Defaults to `MIT`.
-        - `"keywords"`: Update keywords for your project, these will be used when searching in the VS Code marketplace.
-        - `"categories"`: Update categories for your project, makes it easier to filter in the VS Code marketplace.
-        - `"homepage"`, `"repository"`, and `"bugs"` : Update URLs for these fields to point to your project.
-    1. **Optional** Add `"icon"` field with relative path to a image file to use as icon for this project.
+    1. Find and replace `<pytool-module>` with module name for your tool.
+    1. Find and replace `<pytool-display-name>` with display name for your tool. This is used as the title for the extension, output logs, etc.
 1. Install node packages using `npm install`.
 
 ## Features of this Template
@@ -57,6 +49,11 @@ After finishing the getting started part, this template would have added the fol
 ## Adding features from your tool
 
 Open `bundled/tool/server.py`, here is where you will do most of the work. Look for `TODO` comments there for more details.
+
+Also look for `TODO` in other locations in the entire template:
+
+-   `bundled/tool/runner.py` : You may need to update this in some special cases.
+-   `src/test/python_tests/test_server.py` : This is where you will write tests. There are two incomplete examples provided there to get you started.
 
 References:
 
@@ -99,9 +96,16 @@ Run `nox --session lint` to run linting on both Python and TypeScript code. Plea
 
 ## Packaging and Publishing
 
-1. Update the version as need in `package.json`.
-1. Build package using `nox --session build_package`.
-1. Take the generated `.vsix` file and upload it to your extension management page https://marketplace.visualstudio.com/manage.
+1.  Update various fields in `package.json`. Check the following fields and update them accordingly:
+    -   `"publisher"`: Update this to your publisher id from https://marketplace.visualstudio.com/.
+    -   `"version"`: See https://semver.org/ for details of requirements and limitations for this field.
+    -   `"license"`: Update license as per your project. Defaults to `MIT`.
+    -   `"keywords"`: Update keywords for your project, these will be used when searching in the VS Code marketplace.
+    -   `"categories"`: Update categories for your project, makes it easier to filter in the VS Code marketplace.
+    -   `"homepage"`, `"repository"`, and `"bugs"` : Update URLs for these fields to point to your project.
+    -   **Optional** Add `"icon"` field with relative path to a image file to use as icon for this project.
+1.  Build package using `nox --session build_package`.
+1.  Take the generated `.vsix` file and upload it to your extension management page https://marketplace.visualstudio.com/manage.
 
 To do this from the command line see here https://code.visualstudio.com/api/working-with-extensions/publishing-extension
 

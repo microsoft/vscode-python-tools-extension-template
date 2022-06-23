@@ -1,12 +1,12 @@
 {
-    "name": "<pytool>",
-    "displayName": "<PyTool>",
-    "description": "Linting support for python files using `<pytool>`.",
+    "name": "<pytool-module>",
+    "displayName": "<pytool-display-name>",
+    "description": "Linting support for python files using `<pytool-module>`.",
     "version": "2022.3.0-dev",
     "preview": true,
     "serverInfo": {
-        "name": "<PyTool>",
-        "module": "<pytool>"
+        "name": "<pytool-display-name>",
+        "module": "<pytool-module>"
     },
     "publisher": "<my-publisher>",
     "license": "MIT",
@@ -25,7 +25,7 @@
     "keywords": [
         "python",
         "linting",
-        "<pytool>"
+        "<pytool-module>"
     ],
     "engines": {
         "vscode": "^1.64.0"
@@ -41,7 +41,7 @@
     "activationEvents": [
         "onLanguage:python",
         "workspaceContains:*.py",
-        "onCommand:<pytool>.restart"
+        "onCommand:<pytool-module>.restart"
     ],
     "main": "./dist/extension.js",
     "scripts": {
@@ -55,12 +55,12 @@
         "lint": "eslint src --ext ts",
         "format-check": "prettier --check 'src/**/*.ts' 'build/**/*.yml' '.github/**/*.yml'",
         "test": "node ./out/test/runTest.js",
-        "vsce-package": "vsce package -o <pytool>.vsix"
+        "vsce-package": "vsce package -o <pytool-module>.vsix"
     },
     "contributes": {
         "configuration": {
             "properties": {
-                "<pytool>.trace": {
+                "<pytool-module>.trace": {
                     "default": "error",
                     "description": "The trace level the extension logs at, defaults to 'error'",
                     "enum": [
@@ -73,7 +73,7 @@
                     "scope": "window",
                     "type": "string"
                 },
-                "<pytool>.args": {
+                "<pytool-module>.args": {
                     "default": [],
                     "description": "Arguments passed in. Each argument is a separate item in the array.",
                     "items": {
@@ -82,9 +82,9 @@
                     "scope": "resource",
                     "type": "array"
                 },
-                "<pytool>.path": {
+                "<pytool-module>.path": {
                     "default": [],
-                    "description": "When set to a path to <pytool> binary, extension will use that for linting. NOTE: Using this option may slowdown linting.",
+                    "description": "When set to a path to <pytool-module> binary, extension will use that for linting. NOTE: Using this option may slowdown linting.",
                     "scope": "resource",
                     "items": {
                         "type": "string"
@@ -96,8 +96,8 @@
         "commands": [
             {
                 "title": "Restart Server",
-                "category": "<PyTool>",
-                "command": "<pytool>.restart"
+                "category": "<pytool-display-name>",
+                "command": "<pytool-module>.restart"
             }
         ]
     },

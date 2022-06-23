@@ -9,8 +9,11 @@ import pathlib
 import sys
 import traceback
 
-# Ensure that we can import LSP libraries, and other bundled libraries
-sys.path.append(os.fspath(pathlib.Path(__file__).parent.parent / "libs"))
+# Ensure that we can import LSP libraries, and other bundled linter libraries.
+lib_path = os.fspath(pathlib.Path(__file__).parent.parent / "libs")
+if lib_path not in sys.path and os.path.isdir(lib_path):
+    sys.path.append(lib_path)
+del lib_path
 
 # pylint: disable=wrong-import-position,import-error
 import jsonrpc
@@ -33,6 +36,11 @@ while not EXIT_NOW:
         # next time around.
         with utils.substitute_attr(sys, "path", sys.path[:]):
             try:
+                # TODO: `utils.run_module` is equivalent to running `python -m <pytool-module>`.
+                # If your tool supports a programmatic API then replace the function below
+                # with code for your tool. You can also use `utils.run_api` helper, which
+                # handles changing working directories, managing io streams, etc.
+                # Also update `_run_tool_on_document` and `_run_tool` functions in `server.py`.
                 result = utils.run_module(
                     module=msg["module"],
                     argv=msg["argv"],
@@ -40,14 +48,13 @@ while not EXIT_NOW:
                     cwd=msg["cwd"],
                     source=msg["source"] if "source" in msg else None,
                 )
-            except Exception as ex:  # pylint: disable=broad-except
+            except Exception:  # pylint: disable=broad-except
                 result = utils.RunResult("", traceback.format_exc())
 
         response = {"id": msg["id"]}
         if result.stderr:
             response["error"] = result.stderr
-
-        if result.stdout:
+        elif result.stdout:
             response["result"] = result.stdout
 
         RPC.send_data(response)
