@@ -29,8 +29,8 @@ You should know to create and work with python virtual environments.
 1. Run `nox --session setup`.
 1. Install test dependencies `python -m pip install -r src/test/python_tests/requirements.txt`.
 1. Open `package.json`, look for and update the following things:
-    1. Find and replace (case-sensitive) `<pytool-module>` with `mytool`. This is used as module name.
-    1. Find and replace (case-sensitive) `<pytool-display-name>` with `My Tool`. This is used as display and title name.
+    1. Find and replace `<pytool-module>` with module name for your tool.
+    1. Find and replace `<pytool-display-name>` with display name for your tool. This is used as the title for the extension, output logs, etc.
 1. Install node packages using `npm install`.
 
 ## Features of this Template
@@ -49,6 +49,11 @@ After finishing the getting started part, this template would have added the fol
 ## Adding features from your tool
 
 Open `bundled/tool/server.py`, here is where you will do most of the work. Look for `TODO` comments there for more details.
+
+Also look for `TODO` in other locations in the entire template:
+
+-   `bundled/tool/runner.py` : You may need to update this in some special cases.
+-   `src/test/python_tests/test_server.py` : This is where you will write tests. There are two incomplete examples provided there to get you started.
 
 References:
 
