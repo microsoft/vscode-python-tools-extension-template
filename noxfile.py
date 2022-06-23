@@ -1,8 +1,6 @@
 # Copyright (c) Microsoft Corporation. All rights reserved.
 # Licensed under the MIT License.
-"""
-All the action we need during build
-"""
+"""All the action we need during build"""
 
 import nox  # pylint: disable=import-error
 
@@ -52,13 +50,16 @@ def lint(session: nox.Session):
     session.install("-r", "./requirements.txt")
     session.install("-r", "src/test/python_tests/requirements.txt")
 
-    session.run("pylint", "./bundled/tool")
+    session.install("pylint")
+    session.run("pylint", "-d", "W0511", "./bundled/tool")
     session.run(
         "pylint",
+        "-d",
+        "W0511",
         "--ignore=./src/test/python_tests/test_data",
         "./src/test/python_tests",
     )
-    session.run("pylint", "noxfile.py")
+    session.run("pylint", "-d", "W0511", "noxfile.py")
 
     # check formatting using black
     session.install("black")

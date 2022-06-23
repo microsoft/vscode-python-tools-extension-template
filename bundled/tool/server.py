@@ -1,28 +1,46 @@
 # Copyright (c) Microsoft Corporation. All rights reserved.
 # Licensed under the MIT License.
-"""
-Implementation of linting support over LSP.
-"""
+"""Implementation of linting support over LSP."""
+from __future__ import annotations
 
 import copy
 import json
 import os
 import pathlib
+import re
 import sys
-from typing import List, Optional, Sequence, Union
+from typing import Sequence
+
+
+def update_sys_path(path_to_add: str, append: bool = True) -> None:
+    """Add given path to `sys.path`."""
+    if path_to_add not in sys.path and os.path.isdir(path_to_add):
+        if append:
+            sys.path.append(path_to_add)
+        else:
+            sys.path.insert(1, path_to_add)
+
 
 # Ensure that we can import LSP libraries, and other bundled linter libraries.
-sys.path.append(os.fspath(pathlib.Path(__file__).parent.parent / "libs"))
+update_sys_path(os.fspath(pathlib.Path(__file__).parent.parent / "libs"))
 
-# Ensure debugger is loaded before we load anything else.
+
+# TODO: Decide ifn you want debugger support. Remove this block entirely to
+# remove debugging support. This was added for convenience to debug extension
+# and python parts. You can always debug using attach to process, even if you
+# remove this block of code. However, attach to process has several limitations
+# over this method.
+# Ensure debugger is loaded before we load anything else, to debug initialization.
 if os.getenv("USE_DEBUGPY", None) in ["True", "TRUE", "1", "T"]:
     debugger_path = os.getenv("DEBUGPY_PATH", None)
+
     if debugger_path:
         if debugger_path.endswith("debugpy"):
-            sys.path.append(os.fspath(pathlib.Path(debugger_path).parent))
-        else:
-            sys.path.append(debugger_path)
+            debugger_path = os.fspath(pathlib.Path(debugger_path).parent)
 
+        update_sys_path(debugger_path)
+
+        # pylint: disable=wrong-import-position,import-error
         import debugpy
 
         # 5678 is the default port, If you need to change it update it here
@@ -34,14 +52,6 @@ if os.getenv("USE_DEBUGPY", None) in ["True", "TRUE", "1", "T"]:
         # line and set breakpoints as appropriate.
         debugpy.breakpoint()
 
-        # TODO: Remove this block entirely to remove debugging support.
-        # This was added for convenience to debug extension and python parts.
-        # You can always debug using attach to process, even if you remove
-        # this block of code.
-        # NOTE: The above way of attaching debugger allows you to debug
-        # any subprocess launched by this server. If you remove this code
-        # you will have to manually attach to each process when debugging.
-
 # **********************************************************
 # Imports needed for the language server goes below this.
 # **********************************************************
@@ -49,7 +59,6 @@ if os.getenv("USE_DEBUGPY", None) in ["True", "TRUE", "1", "T"]:
 import jsonrpc
 import utils
 from pygls import lsp, protocol, server, uris, workspace
-from pygls.lsp import types
 
 WORKSPACE_SETTINGS = {}
 RUNNER = pathlib.Path(__file__).parent / "runner.py"
@@ -59,91 +68,220 @@ LSP_SERVER = server.LanguageServer(max_workers=MAX_WORKERS)
 
 
 # **********************************************************
-# Tool specific code goes here.
+# Tool specific code goes below this.
 # **********************************************************
 
 # Reference:
-#  LS Protocol: https://microsoft.github.io/language-server-protocol/specifications/specification-3-16/
+#  LS Protocol:
+#  https://microsoft.github.io/language-server-protocol/specifications/specification-3-16/
 #
 #  Sample implementations:
 #  Pylint: https://github.com/microsoft/vscode-pylint/blob/main/bundled/linter
 #  Black: https://github.com/microsoft/vscode-black-formatter/blob/main/bundled/formatter
 #  isort: https://github.com/microsoft/vscode-isort/blob/main/bundled/formatter
 
-# TODO: Update TOOL_MODULE and TOOL_ARGS as needed for your tool.
-TOOL_MODULE = "<pytool>"
+# TODO: Update TOOL_MODULE with the module name for your tool.
+# e.g, TOOL_MODULE = "pylint"
+TOOL_MODULE = "<pytool-module>"
+
+# TODO: Update TOOL_DISPLAY with a display name for your tool.
+# e.g, TOOL_DISPLAY = "Pylint"
+TOOL_DISPLAY = "<pytool-display-name>"
+
+# TODO: Update TOOL_ARGS with default argument you have to pass to your tool in
+# all scenarios.
 TOOL_ARGS = []  # default arguments always passed to your tool.
 
 
+# TODO: If your tool is a linter then update this section.
+# Delete "Linting features" section if your tool is NOT a linter.
+# **********************************************************
+# Linting features start here
+# **********************************************************
+
+#  See `pylint` implementation for a full featured linter extension:
+#  Pylint: https://github.com/microsoft/vscode-pylint/blob/main/bundled/linter
+
+
 @LSP_SERVER.feature(lsp.TEXT_DOCUMENT_DID_OPEN)
-def did_open(server: server.LanguageServer, params: types.DidOpenTextDocumentParams):
+def did_open(
+    lsp_server: server.LanguageServer, params: lsp.DidOpenTextDocumentParams
+) -> None:
     """LSP handler for textDocument/didOpen request."""
-    #  Sample implementations:
-    #  Pylint: https://github.com/microsoft/vscode-pylint/blob/main/bundled/linter
-
-    document = server.workspace.get_document(params.text_document.uri)
-    # Use _run_tool_on_document function to run your tool on a document.
-    # Use _run_tool function for general purpose running your tool.
-
-    # Use this handler for linting on file Open. You have to publish an array of
-    # lsp.Diagnostic objects with the each capturing a problem reported by linter
-    # for that file.
-    diagnostics: List[lsp.Diagnostic] = []
-
-    # TODO: Use _run_tool_on_document to get the stdout from your tool, parse it here
-    # and create instances of lsp.Diagnostic for each issue.
-
-    LSP_SERVER.publish_diagnostics(document.uri, diagnostics)
+    document = lsp_server.workspace.get_document(params.text_document.uri)
+    diagnostics: list[lsp.Diagnostic] = _linting_helper(document)
+    lsp_server.publish_diagnostics(document.uri, diagnostics)
 
 
 @LSP_SERVER.feature(lsp.TEXT_DOCUMENT_DID_SAVE)
-def did_save(server: server.LanguageServer, params: types.DidSaveTextDocumentParams):
+def did_save(
+    lsp_server: server.LanguageServer, params: lsp.DidSaveTextDocumentParams
+) -> None:
     """LSP handler for textDocument/didSave request."""
-    #  Sample implementations:
-    #  Pylint: https://github.com/microsoft/vscode-pylint/blob/main/bundled/linter
-
-    document = server.workspace.get_document(params.text_document.uri)
-    # Use _run_tool_on_document function to run your tool on a document.
-    # Use _run_tool function for general purpose running your tool.
-
-    # Use this handler for linting on file Save. You have to publish an array of
-    # lsp.Diagnostic objects with the each capturing a problem reported by linter
-    # for that file.
-    diagnostics: List[lsp.Diagnostic] = []
-
-    # TODO: Use _run_tool_on_document to get the stdout from your tool, parse it here
-    # and create instances of lsp.Diagnostic for each issue.
-
-    server.publish_diagnostics(document.uri, diagnostics)
+    document = lsp_server.workspace.get_document(params.text_document.uri)
+    diagnostics: list[lsp.Diagnostic] = _linting_helper(document)
+    lsp_server.publish_diagnostics(document.uri, diagnostics)
 
 
 @LSP_SERVER.feature(lsp.TEXT_DOCUMENT_DID_CLOSE)
-def did_close(server: server.LanguageServer, params: types.DidCloseTextDocumentParams):
+def did_close(
+    lsp_server: server.LanguageServer, params: lsp.DidCloseTextDocumentParams
+) -> None:
     """LSP handler for textDocument/didClose request."""
-    document = server.workspace.get_document(params.text_document.uri)
+    document = lsp_server.workspace.get_document(params.text_document.uri)
     # Publishing empty diagnostics to clear the entries for this file.
-    server.publish_diagnostics(document.uri, [])
+    lsp_server.publish_diagnostics(document.uri, [])
+
+
+def _linting_helper(document: workspace.Document) -> list[lsp.Diagnostic]:
+    # TODO: Determine if your tool supports passing file content via stdin.
+    # If you want to support linting on change then your tool will need to
+    # support linting over stdin to be effective. Read, and update
+    # _run_tool_on_document and _run_tool functions as needed for your project.
+    result = _run_tool_on_document(document)
+    return _parse_output_using_regex(result.stdout) if result.stdout else []
+
+
+# TODO: If your linter outputs in a known format like JSON, then parse
+# accordingly. But incase you need to parse the output using RegEx here
+# is a helper you can work with.
+# flake8 example:
+# If you use following format argument with flake8 you can use the regex below to parse it.
+# TOOL_ARGS += ["--format='%(row)d,%(col)d,%(code).1s,%(code)s:%(text)s'"]
+# DIAGNOSTIC_RE =
+#    r"(?P<line>\d+),(?P<column>-?\d+),(?P<type>\w+),(?P<code>\w+\d+):(?P<message>[^\r\n]*)"
+DIAGNOSTIC_RE = re.compile(r"")
+
+
+def _parse_output_using_regex(content: str) -> list[lsp.Diagnostic]:
+    lines: list[str] = content.splitlines()
+    diagnostics: list[lsp.Diagnostic] = []
+
+    # TODO: Determine if your linter reports line numbers starting at 1 (True) or 0 (False).
+    line_at_1 = True
+    # TODO: Determine if your linter reports column numbers starting at 1 (True) or 0 (False).
+    column_at_1 = True
+
+    line_offset = 1 if line_at_1 else 0
+    col_offset = 1 if column_at_1 else 0
+    for line in lines:
+        if line.startswith("'") and line.endswith("'"):
+            line = line[1:-1]
+        match = DIAGNOSTIC_RE.match(line)
+        if match:
+            data = match.groupdict()
+            position = lsp.Position(
+                line=max([int(data["line"]) - line_offset, 0]),
+                character=int(data["column"]) - col_offset,
+            )
+            diagnostic = lsp.Diagnostic(
+                range=lsp.Range(
+                    start=position,
+                    end=position,
+                ),
+                message=data.get("message"),
+                severity=_get_severity(data["code"], data["type"]),
+                code=data["code"],
+                source=TOOL_MODULE,
+            )
+            diagnostics.append(diagnostic)
+
+    return diagnostics
+
+
+# TODO: if you want to handle setting specific severity for your linter
+# in a user configurable way, then look at look at how it is implemented
+# for `pylint` extension from our team.
+# Pylint: https://github.com/microsoft/vscode-pylint
+# Follow the flow of severity from the settings in package.json to the server.
+def _get_severity(*_codes: list[str]) -> lsp.DiagnosticSeverity:
+    # TODO: All reported issues from linter are treated as warning.
+    # change it as appropriate for your linter.
+    return lsp.DiagnosticSeverity.Warning
+
+
+# **********************************************************
+# Linting features end here
+# **********************************************************
+
+# TODO: If your tool is a formatter then update this section.
+# Delete "Formatting features" section if your tool is NOT a
+# formatter.
+# **********************************************************
+# Formatting features start here
+# **********************************************************
+#  Sample implementations:
+#  Black: https://github.com/microsoft/vscode-black-formatter/blob/main/bundled/formatter
 
 
 @LSP_SERVER.feature(lsp.FORMATTING)
-def formatting(server: server.LanguageServer, params: types.DocumentFormattingParams):
+def formatting(
+    lsp_server: server.LanguageServer, params: lsp.DocumentFormattingParams
+) -> list[lsp.TextEdit] | None:
     """LSP handler for textDocument/formatting request."""
-    #  Sample implementations:
-    #  Black: https://github.com/microsoft/vscode-black-formatter/blob/main/bundled/formatter
+    # If your tool is a formatter you can use this handler to provide
+    # formatting support on save. You have to return an array of lsp.TextEdit
+    # objects, to provide your formatted results.
 
-    # If your tool is a formatter you can use this handler to provide formatting support on save.
-    # You have to return an array of lsp.TextEdit objects, to provide your formatted results.
-    # If you provide [] array, VS Code will clear the file of all contents.
+    document = lsp_server.workspace.get_document(params.text_document.uri)
+    edits = _formatting_helper(document)
+    if edits:
+        return edits
 
-    # For no changes in formatting return None.
+    # NOTE: If you provide [] array, VS Code will clear the file of all contents.
+    # To indicate no changes to file return None.
     return None
+
+
+def _formatting_helper(document: workspace.Document) -> list[lsp.TextEdit] | None:
+    # TODO: For formatting on save support the formatter you use must support
+    # formatting via stdin.
+    # Read, and update_run_tool_on_document and _run_tool functions as needed
+    # for your formatter.
+    result = _run_tool_on_document(document, use_stdin=True)
+    if result.stdout:
+        new_source = _match_line_endings(document, result.stdout)
+        return [
+            lsp.TextEdit(
+                range=lsp.Range(
+                    start=lsp.Position(line=0, character=0),
+                    end=lsp.Position(line=len(document.lines), character=0),
+                ),
+                new_text=new_source,
+            )
+        ]
+    return None
+
+
+def _get_line_endings(lines: list[str]) -> str:
+    """Returns line endings used in the text."""
+    try:
+        if lines[0][-2:] == "\r\n":
+            return "\r\n"
+        return "\n"
+    except Exception:  # pylint: disable=broad-except
+        return None
+
+
+def _match_line_endings(document: workspace.Document, text: str) -> str:
+    """Ensures that the edited text line endings matches the document line endings."""
+    expected = _get_line_endings(document.source.splitlines(keepends=True))
+    actual = _get_line_endings(text.splitlines(keepends=True))
+    if actual == expected or actual is None or expected is None:
+        return text
+    return text.replace(actual, expected)
+
+
+# **********************************************************
+# Formatting features ends here
+# **********************************************************
 
 
 # **********************************************************
 # Required Language Server Initialization and Exit handlers.
 # **********************************************************
 @LSP_SERVER.feature(lsp.INITIALIZE)
-def initialize(params: types.InitializeParams):
+def initialize(params: lsp.InitializeParams) -> None:
     """LSP handler for initialize request."""
     LSP_SERVER.show_message_log(f"CWD Server: {os.getcwd()}")
 
@@ -157,15 +295,12 @@ def initialize(params: types.InitializeParams):
     )
 
     if isinstance(LSP_SERVER.lsp, protocol.LanguageServerProtocol):
-        trace = lsp.Trace.Off
-        for setting in settings:
-            if setting["trace"] == "debug":
-                trace = lsp.Trace.Verbose
-                break
-            if setting["trace"] == "off":
-                continue
-            trace = lsp.Trace.Messages
-        LSP_SERVER.lsp.trace = trace
+        if any(setting["trace"] == "debug" for setting in settings):
+            LSP_SERVER.lsp.trace = lsp.Trace.Verbose
+        elif any(setting["trace"] in ["error", "warn", "info"] for setting in settings):
+            LSP_SERVER.lsp.trace = lsp.Trace.Messages
+        else:
+            LSP_SERVER.lsp.trace = lsp.Trace.Off
 
 
 @LSP_SERVER.feature(lsp.EXIT)
@@ -175,7 +310,7 @@ def on_exit():
 
 
 # *****************************************************
-# Internal settings management APIs.
+# Internal functional and settings management APIs.
 # *****************************************************
 def _update_workspace_settings(settings):
     for setting in settings:
@@ -186,13 +321,14 @@ def _update_workspace_settings(settings):
         }
 
 
-def _get_settings_by_document(document: Optional[workspace.Document]):
+def _get_settings_by_document(document: workspace.Document | None):
     if len(WORKSPACE_SETTINGS) == 1 or document is None or document.path is None:
         return list(WORKSPACE_SETTINGS.values())[0]
 
     document_workspace = pathlib.Path(document.path)
-    workspaces = [s["workspaceFS"] for s in WORKSPACE_SETTINGS.values()]
+    workspaces = {s["workspaceFS"] for s in WORKSPACE_SETTINGS.values()}
 
+    # COMMENT: about non workspace files
     while document_workspace != document_workspace.parent:
         if str(document_workspace) in workspaces:
             break
@@ -207,11 +343,11 @@ def _get_settings_by_document(document: Optional[workspace.Document]):
 def _run_tool_on_document(
     document: workspace.Document,
     use_stdin: bool = False,
-) -> Union[utils.RunResult, None]:
+) -> utils.RunResult | None:
     """Runs tool on the given document.
 
-    params:
-      - use_stdin: bool = Default False. When True passes the contents of the documents to the
+    if use_stdin is true then contents of the document is passed to the
+    tool via stdin.
     """
     if str(document.uri).startswith("vscode-notebook-cell"):
         # TODO: Decide on if you want to skip notebook cells.
@@ -231,11 +367,11 @@ def _run_tool_on_document(
 
     use_path = False
     use_rpc = False
-    if len(settings["path"]) > 0:
+    if settings["path"]:
         # 'path' setting takes priority over everything.
         use_path = True
         argv = settings["path"]
-    elif len(settings["interpreter"]) > 0 and not utils.is_current_interpreter(
+    elif settings["interpreter"] and not utils.is_current_interpreter(
         settings["interpreter"][0]
     ):
         # If there is a different interpreter set use JSON-RPC to the subprocess
@@ -293,10 +429,11 @@ def _run_tool_on_document(
         # This is needed to preserve sys.path, in cases where the tool modifies
         # sys.path and that might not work for this scenario next time around.
         with utils.substitute_attr(sys, "path", sys.path[:]):
-            # TODO: `utils.run_module` is equivalent to running `python -m <pytool>`.
+            # TODO: `utils.run_module` is equivalent to running `python -m <pytool-module>`.
             # If your tool supports a programmatic API then replace the function below
-            # with code for your tool. Also update `_run_tool` function and
-            # `utils.run_module` in `runner.py`.
+            # with code for your tool. You can also use `utils.run_api` helper, which
+            # handles changing working directories, managing io streams, etc.
+            # Also update `_run_tool` function and `utils.run_module` in `runner.py`.
             result = utils.run_module(
                 module=TOOL_MODULE,
                 argv=argv,
@@ -364,10 +501,11 @@ def _run_tool(extra_args: Sequence[str]) -> utils.RunResult:
         # This is needed to preserve sys.path, in cases where the tool modifies
         # sys.path and that might not work for this scenario next time around.
         with utils.substitute_attr(sys, "path", sys.path[:]):
-            # TODO: `utils.run_module` is equivalent to running `python -m <pytool>`.
+            # TODO: `utils.run_module` is equivalent to running `python -m <pytool-module>`.
             # If your tool supports a programmatic API then replace the function below
-            # with code for your tool. Also update `_run_tool_on_document` function and
-            # `utils.run_module` in `runner.py`.
+            # with code for your tool. You can also use `utils.run_api` helper, which
+            # handles changing working directories, managing io streams, etc.
+            # Also update `_run_tool_on_document` function and `utils.run_module` in `runner.py`.
             result = utils.run_module(
                 module=TOOL_MODULE, argv=argv, use_stdin=True, cwd=cwd
             )
