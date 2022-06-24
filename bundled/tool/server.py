@@ -1,6 +1,6 @@
 # Copyright (c) Microsoft Corporation. All rights reserved.
 # Licensed under the MIT License.
-"""Implementation of linting support over LSP."""
+"""Implementation of tool support over LSP."""
 from __future__ import annotations
 
 import copy
@@ -12,45 +12,20 @@ import sys
 from typing import Sequence
 
 
+# **********************************************************
+# Update sys.path before importing any bundled libraries.
+# **********************************************************
 def update_sys_path(path_to_add: str, append: bool = True) -> None:
     """Add given path to `sys.path`."""
     if path_to_add not in sys.path and os.path.isdir(path_to_add):
         if append:
             sys.path.append(path_to_add)
         else:
-            sys.path.insert(1, path_to_add)
+            sys.path.insert(0, path_to_add)
 
 
-# Ensure that we can import LSP libraries, and other bundled linter libraries.
+# Ensure that we can import LSP libraries, and other bundled libraries.
 update_sys_path(os.fspath(pathlib.Path(__file__).parent.parent / "libs"))
-
-
-# TODO: Decide ifn you want debugger support. Remove this block entirely to
-# remove debugging support. This was added for convenience to debug extension
-# and python parts. You can always debug using attach to process, even if you
-# remove this block of code. However, attach to process has several limitations
-# over this method.
-# Ensure debugger is loaded before we load anything else, to debug initialization.
-if os.getenv("USE_DEBUGPY", None) in ["True", "TRUE", "1", "T"]:
-    debugger_path = os.getenv("DEBUGPY_PATH", None)
-
-    if debugger_path:
-        if debugger_path.endswith("debugpy"):
-            debugger_path = os.fspath(pathlib.Path(debugger_path).parent)
-
-        update_sys_path(debugger_path)
-
-        # pylint: disable=wrong-import-position,import-error
-        import debugpy
-
-        # 5678 is the default port, If you need to change it update it here
-        # and in launch.json.
-        debugpy.connect(5678)
-
-        # This will ensure that execution is paused as soon as the debugger
-        # connects to VS Code. If you don't want to pause here comment this
-        # line and set breakpoints as appropriate.
-        debugpy.breakpoint()
 
 # **********************************************************
 # Imports needed for the language server goes below this.
@@ -104,33 +79,27 @@ TOOL_ARGS = []  # default arguments always passed to your tool.
 
 
 @LSP_SERVER.feature(lsp.TEXT_DOCUMENT_DID_OPEN)
-def did_open(
-    lsp_server: server.LanguageServer, params: lsp.DidOpenTextDocumentParams
-) -> None:
+def did_open(params: lsp.DidOpenTextDocumentParams) -> None:
     """LSP handler for textDocument/didOpen request."""
-    document = lsp_server.workspace.get_document(params.text_document.uri)
+    document = LSP_SERVER.workspace.get_document(params.text_document.uri)
     diagnostics: list[lsp.Diagnostic] = _linting_helper(document)
-    lsp_server.publish_diagnostics(document.uri, diagnostics)
+    LSP_SERVER.publish_diagnostics(document.uri, diagnostics)
 
 
 @LSP_SERVER.feature(lsp.TEXT_DOCUMENT_DID_SAVE)
-def did_save(
-    lsp_server: server.LanguageServer, params: lsp.DidSaveTextDocumentParams
-) -> None:
+def did_save(params: lsp.DidSaveTextDocumentParams) -> None:
     """LSP handler for textDocument/didSave request."""
-    document = lsp_server.workspace.get_document(params.text_document.uri)
+    document = LSP_SERVER.workspace.get_document(params.text_document.uri)
     diagnostics: list[lsp.Diagnostic] = _linting_helper(document)
-    lsp_server.publish_diagnostics(document.uri, diagnostics)
+    LSP_SERVER.publish_diagnostics(document.uri, diagnostics)
 
 
 @LSP_SERVER.feature(lsp.TEXT_DOCUMENT_DID_CLOSE)
-def did_close(
-    lsp_server: server.LanguageServer, params: lsp.DidCloseTextDocumentParams
-) -> None:
+def did_close(params: lsp.DidCloseTextDocumentParams) -> None:
     """LSP handler for textDocument/didClose request."""
-    document = lsp_server.workspace.get_document(params.text_document.uri)
+    document = LSP_SERVER.workspace.get_document(params.text_document.uri)
     # Publishing empty diagnostics to clear the entries for this file.
-    lsp_server.publish_diagnostics(document.uri, [])
+    LSP_SERVER.publish_diagnostics(document.uri, [])
 
 
 def _linting_helper(document: workspace.Document) -> list[lsp.Diagnostic]:
@@ -215,15 +184,13 @@ def _get_severity(*_codes: list[str]) -> lsp.DiagnosticSeverity:
 
 
 @LSP_SERVER.feature(lsp.FORMATTING)
-def formatting(
-    lsp_server: server.LanguageServer, params: lsp.DocumentFormattingParams
-) -> list[lsp.TextEdit] | None:
+def formatting(params: lsp.DocumentFormattingParams) -> list[lsp.TextEdit] | None:
     """LSP handler for textDocument/formatting request."""
     # If your tool is a formatter you can use this handler to provide
     # formatting support on save. You have to return an array of lsp.TextEdit
     # objects, to provide your formatted results.
 
-    document = lsp_server.workspace.get_document(params.text_document.uri)
+    document = LSP_SERVER.workspace.get_document(params.text_document.uri)
     edits = _formatting_helper(document)
     if edits:
         return edits
@@ -397,6 +364,8 @@ def _run_tool_on_document(
         # Read up on how your tool handles contents via stdin. If stdin is not supported use
         # set use_stdin to False, or provide path, what ever is appropriate for your tool.
         argv += []
+    else:
+        argv += [document.path]
 
     if use_path:
         # This mode is used when running executables.
