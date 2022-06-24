@@ -10,7 +10,7 @@ import {
     RevealOutputChannelOn,
     ServerOptions,
 } from 'vscode-languageclient/node';
-import { SERVER_SCRIPT_PATH } from './constants';
+import { DEBUG_SERVER_SCRIPT_PATH, SERVER_SCRIPT_PATH } from './constants';
 import { traceInfo, traceVerbose } from './log/logging';
 import { getDebuggerPath } from './python';
 import { ISettings } from './settings';
@@ -42,20 +42,27 @@ export async function createServer(
     initializationOptions: IInitOptions,
 ): Promise<LanguageClient> {
     const command = interpreter[0];
-    const env = process.env;
+    const cwd = getProjectRoot();
+
+    // Set debugger path needed for debugging python code.
+    const debugEnv = process.env;
     const debuggerPath = await getDebuggerPath();
-    if (env.USE_DEBUGPY && debuggerPath) {
-        env.DEBUGPY_PATH = debuggerPath;
+    if (debugEnv.USE_DEBUGPY && debuggerPath) {
+        debugEnv.DEBUGPY_PATH = debuggerPath;
     } else {
-        env.USE_DEBUGPY = 'False';
+        debugEnv.USE_DEBUGPY = 'False';
     }
+
+    const args =
+        debugEnv.USE_DEBUGPY === 'False'
+            ? interpreter.slice(1).concat([SERVER_SCRIPT_PATH])
+            : interpreter.slice(1).concat([DEBUG_SERVER_SCRIPT_PATH]);
+    traceInfo(`Server run command: ${[command, ...args].join(' ')}`);
+
     const serverOptions: ServerOptions = {
         command,
-        args: interpreter.slice(1).concat([SERVER_SCRIPT_PATH]),
-        options: {
-            cwd: getProjectRoot(),
-            env,
-        },
+        args,
+        options: { cwd, env: debugEnv },
     };
 
     // Options to control the language client
