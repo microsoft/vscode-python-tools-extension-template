@@ -37,14 +37,15 @@ You should know to create and work with python virtual environments.
 
 After finishing the getting started part, this template would have added the following:
 
-1. A command `My Tool: Restart Server`.
+1. A command `My Tool: Restart Server` (command Id: `mytool.restart`).
 1. Following setting:
-    - `mytool.trace`
+    - `mytool.logLevel`
     - `mytool.args`
     - `mytool.path`
 1. Following triggers for extension activation:
     - On Language `python`.
     - On File with `.py` extension found in the opened workspace.
+    - On Command `mytool.restart`.
 
 ## Adding features from your tool
 
@@ -104,6 +105,9 @@ Run `nox --session lint` to run linting on both Python and TypeScript code. Plea
     -   `"categories"`: Update categories for your project, makes it easier to filter in the VS Code marketplace.
     -   `"homepage"`, `"repository"`, and `"bugs"` : Update URLs for these fields to point to your project.
     -   **Optional** Add `"icon"` field with relative path to a image file to use as icon for this project.
+1.  Make sure to check the following markdown files:
+    -   First time only (REQUIRED): CODE_OF_CONDUCT.md, LICENSE, SUPPORT.md, SECURITY.md
+    -   Every Release: CHANGELOG.md
 1.  Build package using `nox --session build_package`.
 1.  Take the generated `.vsix` file and upload it to your extension management page https://marketplace.visualstudio.com/manage.
 
