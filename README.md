@@ -106,8 +106,8 @@ Run `nox --session lint` to run linting on both Python and TypeScript code. Plea
     -   `"homepage"`, `"repository"`, and `"bugs"` : Update URLs for these fields to point to your project.
     -   **Optional** Add `"icon"` field with relative path to a image file to use as icon for this project.
 1.  Make sure to check the following markdown files:
-    -   First time only (REQUIRED): CODE_OF_CONDUCT.md, LICENSE, SUPPORT.md, SECURITY.md
-    -   Every Release: CHANGELOG.md
+    -   **REQUIRED** First time only: `CODE_OF_CONDUCT.md`, `LICENSE`, `SUPPORT.md`, `SECURITY.md`
+    -   Every Release: `CHANGELOG.md`
 1.  Build package using `nox --session build_package`.
 1.  Take the generated `.vsix` file and upload it to your extension management page https://marketplace.visualstudio.com/manage.
 

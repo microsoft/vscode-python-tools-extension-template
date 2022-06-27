@@ -1,3 +1,3 @@
 # Change Log
 
--   Release information can be added here or can be track via github release.
+-   Release information can be added here or can be tracked via github release.
