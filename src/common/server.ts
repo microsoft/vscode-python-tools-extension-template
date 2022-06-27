@@ -13,24 +13,26 @@ import {
 import { DEBUG_SERVER_SCRIPT_PATH, SERVER_SCRIPT_PATH } from './constants';
 import { traceInfo, traceVerbose } from './log/logging';
 import { getDebuggerPath } from './python';
-import { ISettings } from './settings';
+import { getWorkspaceSettings, ISettings } from './settings';
 import { traceLevelToLSTrace } from './utilities';
 import { getWorkspaceFolders, isVirtualWorkspace } from './vscodeapi';
 
 export type IInitOptions = { settings: ISettings[] };
 
-function getProjectRoot() {
+function getProjectRoot(): WorkspaceFolder {
     const workspaces: readonly WorkspaceFolder[] = getWorkspaceFolders();
     if (workspaces.length === 1) {
-        return workspaces[0].uri.fsPath;
+        return workspaces[0];
     } else {
         let root = workspaces[0].uri.fsPath;
+        let rootWorkspace = workspaces[0];
         for (const w of workspaces) {
             if (root.length > w.uri.fsPath.length) {
                 root = w.uri.fsPath;
+                rootWorkspace = w;
             }
         }
-        return root;
+        return rootWorkspace;
     }
 }
 
@@ -42,7 +44,7 @@ export async function createServer(
     initializationOptions: IInitOptions,
 ): Promise<LanguageClient> {
     const command = interpreter[0];
-    const cwd = getProjectRoot();
+    const cwd = getProjectRoot().uri.fsPath;
 
     // Set debugger path needed for debugging python code.
     const debugEnv = process.env;
@@ -101,7 +103,8 @@ export async function restartServer(
         _disposables = [];
     }
     const newLSClient = await createServer(interpreter, serverId, serverName, outputChannel, initializationOptions);
-    newLSClient.trace = traceLevelToLSTrace(initializationOptions.settings[0].trace);
+    const workspaceSetting = await getWorkspaceSettings(getProjectRoot(), serverId);
+    newLSClient.trace = traceLevelToLSTrace(workspaceSetting.logLevel);
     traceInfo(`Server: Start requested.`);
     _disposables.push(
         newLSClient.onDidChangeState((e) => {
