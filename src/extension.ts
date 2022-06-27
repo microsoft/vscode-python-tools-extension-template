@@ -24,7 +24,7 @@ export async function activate(context: vscode.ExtensionContext): Promise<void> 
     // Setup logging
     const outputChannel = createOutputChannel(serverName);
     context.subscriptions.push(outputChannel);
-    setLoggingLevel(settings[0].trace);
+    setLoggingLevel(settings[0].logLevel);
     context.subscriptions.push(registerLogger(new OutputChannelLogger(outputChannel)));
 
     traceLog(`Name: ${serverName}`);
@@ -63,7 +63,7 @@ export async function activate(context: vscode.ExtensionContext): Promise<void> 
         onDidChangeConfiguration(async (e: vscode.ConfigurationChangeEvent) => {
             if (checkIfConfigurationChanged(e, serverId)) {
                 const newSettings = await getExtensionSettings(serverId);
-                setLoggingLevel(newSettings[0].trace);
+                setLoggingLevel(newSettings[0].logLevel);
 
                 await runServer();
             }
