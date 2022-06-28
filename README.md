@@ -37,14 +37,15 @@ You should know to create and work with python virtual environments.
 
 After finishing the getting started part, this template would have added the following:
 
-1. A command `My Tool: Restart Server`.
+1. A command `My Tool: Restart Server` (command Id: `mytool.restart`).
 1. Following setting:
-    - `mytool.trace`
+    - `mytool.logLevel`
     - `mytool.args`
     - `mytool.path`
 1. Following triggers for extension activation:
     - On Language `python`.
     - On File with `.py` extension found in the opened workspace.
+    - On Command `mytool.restart`.
 
 ## Adding features from your tool
 
@@ -104,6 +105,9 @@ Run `nox --session lint` to run linting on both Python and TypeScript code. Plea
     -   `"categories"`: Update categories for your project, makes it easier to filter in the VS Code marketplace.
     -   `"homepage"`, `"repository"`, and `"bugs"` : Update URLs for these fields to point to your project.
     -   **Optional** Add `"icon"` field with relative path to a image file to use as icon for this project.
+1.  Make sure to check the following markdown files:
+    -   **REQUIRED** First time only: `CODE_OF_CONDUCT.md`, `LICENSE`, `SUPPORT.md`, `SECURITY.md`
+    -   Every Release: `CHANGELOG.md`
 1.  Build package using `nox --session build_package`.
 1.  Take the generated `.vsix` file and upload it to your extension management page https://marketplace.visualstudio.com/manage.
 
@@ -132,3 +136,7 @@ Also make sure that the inserted paths in `server.py` are pointing to the right 
 This can occurs if `bundled/libs` is empty. That is the folder where we put your tool and other dependencies. Be sure to follow the build steps need for creating and bundling the required libs.
 
 Common one is `pygls` module not found.
+
+# TODO: The maintainer of this repo has not yet edited this file
+
+**Repo Owner** Make sure you update this. As a repository owner you will need to update this file with specific instructions for your extension.
