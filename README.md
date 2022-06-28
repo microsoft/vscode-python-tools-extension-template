@@ -136,3 +136,7 @@ Also make sure that the inserted paths in `server.py` are pointing to the right 
 This can occurs if `bundled/libs` is empty. That is the folder where we put your tool and other dependencies. Be sure to follow the build steps need for creating and bundling the required libs.
 
 Common one is `pygls` module not found.
+
+# TODO: The maintainer of this repo has not yet edited this file
+
+**Repo Owner** Make sure you update this. As a repository owner you will need to update this file with specific instructions for your extension.

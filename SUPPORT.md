@@ -1,6 +1,6 @@
 # TODO: The maintainer of this repo has not yet edited this file
 
-**Repo Owner** Make sure you update this before release.
+**Repo Owner** Make sure you update this. As a repository owner you will need to decide how you want to offer support for your extension.
 
 # Support
 

@@ -2,10 +2,14 @@
 # Licensed under the MIT License.
 """All the action we need during build"""
 
+import os
+import pathlib
+from typing import List
+
 import nox  # pylint: disable=import-error
 
 
-def _install_bundle(session: nox.Session):
+def _install_bundle(session: nox.Session) -> None:
     session.install(
         "-t",
         "./bundled/libs",
@@ -19,7 +23,16 @@ def _install_bundle(session: nox.Session):
     )
 
 
-def _setup_template_environment(session: nox.Session):
+def _check_files(names: List[str]) -> None:
+    root_dir = pathlib.Path(__file__).parent
+    for name in names:
+        file_path = root_dir / name
+        lines: List[str] = file_path.read_text().splitlines()
+        if any(line for line in lines if line.startswith("# TODO:")):
+            raise Exception(f"Please update {os.fspath(file_path)}.")
+
+
+def _setup_template_environment(session: nox.Session) -> None:
     session.install("wheel", "pip-tools")
     session.run("pip-compile", "--generate-hashes", "--upgrade", "./requirements.in")
     session.run(
@@ -32,20 +45,20 @@ def _setup_template_environment(session: nox.Session):
 
 
 @nox.session(python="3.7")
-def setup(session: nox.Session):
+def setup(session: nox.Session) -> None:
     """Sets up the template for development."""
     _setup_template_environment(session)
 
 
 @nox.session()
-def tests(session: nox.Session):
+def tests(session: nox.Session) -> None:
     """Runs all the tests for the extension."""
     session.install("-r", "src/test/python_tests/requirements.txt")
     session.run("pytest", "src/test/python_tests")
 
 
 @nox.session()
-def lint(session: nox.Session):
+def lint(session: nox.Session) -> None:
     """Runs linter and formatter checks on python files."""
     session.install("-r", "./requirements.txt")
     session.install("-r", "src/test/python_tests/requirements.txt")
@@ -78,8 +91,9 @@ def lint(session: nox.Session):
 
 
 @nox.session()
-def build_package(session: nox.Session):
+def build_package(session: nox.Session) -> None:
     """Builds VSIX package for publishing."""
+    _check_files(["README.md", "LICENSE", "SECURITY.md", "SUPPORT.md"])
     _setup_template_environment(session)
     session.run("npm", "install", external=True)
     session.run("npm", "run", "vsce-package", external=True)
