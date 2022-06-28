@@ -1,6 +1,6 @@
 # Template for VS Code python tools extensions
 
-This is a template repository to get you started on building a VS Code extension for your favorite python tool. It code be a linter, formatter, or code analysis, or all of them together. This template we give you the basic building blocks you need to build a VS Code extension for it.
+This is a template repository to get you started on building a VS Code extension for your favorite python tool. It could be a linter, formatter, or code analysis, or all of those together. This template we give you the basic building blocks you need to build a VS Code extension for it.
 
 ## Programming Languages and Frameworks
 
@@ -22,20 +22,21 @@ You should know to create and work with python virtual environments.
 
 ## Getting Started
 
-1. Copy the contents of this template into your new project folder. Or, use this template while creating repo.
+1. Use this [template to create your repo](https://docs.github.com/en/repositories/creating-and-managing-repositories/creating-a-repository-from-a-template).
+1. Check-out your repo locally on your development machine.
 1. Create and activate a python virtual environment for this project in a terminal. Be sure to use the minimum version of python for your tool. This template was written to work with python 3.7 or greater.
 1. Install `nox` in the activated environment: `python -m pip install nox`.
 1. Add your favorite tool to `requirements.in`
 1. Run `nox --session setup`.
 1. Install test dependencies `python -m pip install -r src/test/python_tests/requirements.txt`.
 1. Open `package.json`, look for and update the following things:
-    1. Find and replace `<pytool-module>` with module name for your tool.
-    1. Find and replace `<pytool-display-name>` with display name for your tool. This is used as the title for the extension, output logs, etc.
+    1. Find and replace `<pytool-module>` with module name for your tool. This will be used internally to create settings namespace, register commands, etc. Recommendation is to use lower case version of the name, no spaces, `-` are ok. For example, replacing `<pytool-module>` with `pylint` will lead to settings looking like `pylint.args`. Another example, replacing `<pytool-module>` with `black-formatter` will make settings look like `black-formatter.args`.
+    1. Find and replace `<pytool-display-name>` with display name for your tool. This is used as the title for the extension in market place, extensions view, output logs, etc.
 1. Install node packages using `npm install`.
 
 ## Features of this Template
 
-After finishing the getting started part, this template would have added the following:
+After finishing the getting started part, this template would have added the following. Assume `<pytool-module>` was replaced with `mytool`, and <pytool-display-name>` with `My Tool`:
 
 1. A command `My Tool: Restart Server` (command Id: `mytool.restart`).
 1. Following setting:
@@ -46,19 +47,21 @@ After finishing the getting started part, this template would have added the fol
     - On Language `python`.
     - On File with `.py` extension found in the opened workspace.
     - On Command `mytool.restart`.
+1. Output Channel for logging `Output` > `My Tool`
 
 ## Adding features from your tool
 
-Open `bundled/tool/server.py`, here is where you will do most of the work. Look for `TODO` comments there for more details.
+Open `bundled/tool/server.py`, here is where you will do most of the chnages. Look for `TODO` comments there for more details.
 
 Also look for `TODO` in other locations in the entire template:
 
 -   `bundled/tool/runner.py` : You may need to update this in some special cases.
 -   `src/test/python_tests/test_server.py` : This is where you will write tests. There are two incomplete examples provided there to get you started.
+-   All the markdown files in this template have some `TODO` items, be sure to check them out as well. That includes updating the LICENSE file, even if you want to keep it MIT License.
 
-References:
+References, to other extension created by our team using the template:
 
--   Protocol reference: https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification/
+-   Protocol reference: https://microsoft.github.io/language-server-protocol/specifications/specification-3-16/
 -   Implementation showing how to handle Linting on file `open`, `save`, and `close`. [Pylint](https://github.com/microsoft/vscode-pylint/blob/main/bundled/linter)
 -   Implementation showing how to handle Formatting. [Black Formatter](https://github.com/microsoft/vscode-black-formatter/blob/main/bundled/formatter)
 -   Implementation showing how to handle Code Actions. [isort](https://github.com/microsoft/vscode-isort/blob/main/bundled/formatter)
@@ -71,7 +74,7 @@ Note: if you just want to build you can run the build task in VS Code (`ctrl`+`s
 
 ## Debugging
 
-To debug both TypeScript and Python code use `Debug Extension and Python` debug config.
+To debug both TypeScript and Python code use `Debug Extension and Python` debug config. This is the recommended way. Also, when stopping, besure to stop both the Typescript, and Python debug sessions. Otherwise, it may not reconnet to the python session.
 
 To debug only TypeScript code, use `Debug Extension` debug config.
 
@@ -79,7 +82,7 @@ To debug a already running server or in production server, use `Python Attach`, 
 
 ## Adding new Settings or Commands
 
-You can add settings by contributing a configuration in `package.json` file. To pass this configuration to your python tool server (i.e, `server.py`) update the `settings.ts` as need. There are examples of different types of settings in that file that you can base your new setting on.
+You can add new settings by adding deatails for the settings in `package.json` file. To pass this configuration to your python tool server (i.e, `server.py`) update the `settings.ts` as need. There are examples of different types of settings in that file that you can base your new settings on.
 
 You can follow how `restart` command is implemented in `package.json` and `extension.ts` for how to add commands. You cam also contribute commands from Python via the Language Server Protocol.
 
@@ -97,7 +100,7 @@ Run `nox --session lint` to run linting on both Python and TypeScript code. Plea
 
 ## Packaging and Publishing
 
-1.  Update various fields in `package.json`. Check the following fields and update them accordingly:
+1.  Update various fields in `package.json`. At minimum, check the following fields and update them accordingly. See [extension manifest reference](https://code.visualstudio.com/api/references/extension-manifest) to add more fields:
     -   `"publisher"`: Update this to your publisher id from https://marketplace.visualstudio.com/.
     -   `"version"`: See https://semver.org/ for details of requirements and limitations for this field.
     -   `"license"`: Update license as per your project. Defaults to `MIT`.
