@@ -4,17 +4,14 @@ changelog:
       - 'skip news'
 
   categories:
-    - title: Bug Fixes
-      labels:
-        - 'bug'
-        - 'news'
-
     - title: Enhancements
       labels:
         - 'feature-request'
-        - 'news'
+
+    - title: Bug Fixes
+      labels:
+        - 'bug'
 
     - title: Code Health
       labels:
         - 'debt'
-        - 'news'
