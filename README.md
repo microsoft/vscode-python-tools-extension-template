@@ -28,15 +28,15 @@ You should know to create and work with python virtual environments.
 1. Install `nox` in the activated environment: `python -m pip install nox`.
 1. Add your favorite tool to `requirements.in`
 1. Run `nox --session setup`.
-1. Install test dependencies `python -m pip install -r src/test/python_tests/requirements.txt`.
+1. **Optional** Install test dependencies `python -m pip install -r src/test/python_tests/requirements.txt`. You will have to install these to run tests from the Test Explorer.
 1. Open `package.json`, look for and update the following things:
     1. Find and replace `<pytool-module>` with module name for your tool. This will be used internally to create settings namespace, register commands, etc. Recommendation is to use lower case version of the name, no spaces, `-` are ok. For example, replacing `<pytool-module>` with `pylint` will lead to settings looking like `pylint.args`. Another example, replacing `<pytool-module>` with `black-formatter` will make settings look like `black-formatter.args`.
-    1. Find and replace `<pytool-display-name>` with display name for your tool. This is used as the title for the extension in market place, extensions view, output logs, etc.
+    1. Find and replace `<pytool-display-name>` with display name for your tool. This is used as the title for the extension in market place, extensions view, output logs, etc. For example, for the `black` extension this is `Black Formatter`.
 1. Install node packages using `npm install`.
 
 ## Features of this Template
 
-After finishing the getting started part, this template would have added the following. Assume `<pytool-module>` was replaced with `mytool`, and <pytool-display-name>` with `My Tool`:
+After finishing the getting started part, this template would have added the following. Assume `<pytool-module>` was replaced with `mytool`, and `<pytool-display-name>` with`My Tool`:
 
 1. A command `My Tool: Restart Server` (command Id: `mytool.restart`).
 1. Following setting:
@@ -51,7 +51,7 @@ After finishing the getting started part, this template would have added the fol
 
 ## Adding features from your tool
 
-Open `bundled/tool/server.py`, here is where you will do most of the chnages. Look for `TODO` comments there for more details.
+Open `bundled/tool/server.py`, here is where you will do most of the changes. Look for `TODO` comments there for more details.
 
 Also look for `TODO` in other locations in the entire template:
 
@@ -74,7 +74,7 @@ Note: if you just want to build you can run the build task in VS Code (`ctrl`+`s
 
 ## Debugging
 
-To debug both TypeScript and Python code use `Debug Extension and Python` debug config. This is the recommended way. Also, when stopping, besure to stop both the Typescript, and Python debug sessions. Otherwise, it may not reconnet to the python session.
+To debug both TypeScript and Python code use `Debug Extension and Python` debug config. This is the recommended way. Also, when stopping, be sure to stop both the Typescript, and Python debug sessions. Otherwise, it may not reconnect to the python session.
 
 To debug only TypeScript code, use `Debug Extension` debug config.
 
@@ -82,7 +82,7 @@ To debug a already running server or in production server, use `Python Attach`, 
 
 ## Adding new Settings or Commands
 
-You can add new settings by adding deatails for the settings in `package.json` file. To pass this configuration to your python tool server (i.e, `server.py`) update the `settings.ts` as need. There are examples of different types of settings in that file that you can base your new settings on.
+You can add new settings by adding details for the settings in `package.json` file. To pass this configuration to your python tool server (i.e, `server.py`) update the `settings.ts` as need. There are examples of different types of settings in that file that you can base your new settings on.
 
 You can follow how `restart` command is implemented in `package.json` and `extension.ts` for how to add commands. You cam also contribute commands from Python via the Language Server Protocol.
 
