@@ -25,7 +25,10 @@ def update_sys_path(path_to_add: str, append: bool = True) -> None:
 
 
 # Ensure that we can import LSP libraries, and other bundled libraries.
-update_sys_path(os.fspath(pathlib.Path(__file__).parent.parent / "libs"))
+update_sys_path(
+    os.fspath(pathlib.Path(__file__).parent.parent / "libs"),
+    os.getenv("LS_IMPORT_STRATEGY", "fromEnvironment") == "fromEnvironment",
+)
 
 # **********************************************************
 # Imports needed for the language server goes below this.

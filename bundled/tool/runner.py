@@ -9,11 +9,25 @@ import pathlib
 import sys
 import traceback
 
+
+# **********************************************************
+# Update sys.path before importing any bundled libraries.
+# **********************************************************
+def update_sys_path(path_to_add: str, append: bool = True) -> None:
+    """Add given path to `sys.path`."""
+    if path_to_add not in sys.path and os.path.isdir(path_to_add):
+        if append:
+            sys.path.append(path_to_add)
+        else:
+            sys.path.insert(0, path_to_add)
+
+
 # Ensure that we can import LSP libraries, and other bundled linter libraries.
-lib_path = os.fspath(pathlib.Path(__file__).parent.parent / "libs")
-if lib_path not in sys.path and os.path.isdir(lib_path):
-    sys.path.append(lib_path)
-del lib_path
+update_sys_path(
+    os.fspath(pathlib.Path(__file__).parent.parent / "libs"),
+    os.getenv("LS_IMPORT_STRATEGY", "fromEnvironment") == "fromEnvironment",
+)
+
 
 # pylint: disable=wrong-import-position,import-error
 import jsonrpc

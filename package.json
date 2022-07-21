@@ -84,12 +84,53 @@
                 },
                 "<pytool-module>.path": {
                     "default": [],
-                    "description": "When set to a path to <pytool-module> binary, extension will use that for linting. NOTE: Using this option may slowdown linting.",
+                    "description": "When set to a path to <pytool-module> binary, extension will use that. NOTE: Using this option may slowdown server response time.",
                     "scope": "resource",
                     "items": {
                         "type": "string"
                     },
                     "type": "array"
+                },
+                "<pytool-module>.importStrategy": {
+                    "default": "fromEnvironment",
+                    "description": "Defines where `<pytool-module>` is imported from. This setting may be ignored if `<pytool-module>.path` is set.",
+                    "enum": [
+                        "useBundled",
+                        "fromEnvironment"
+                    ],
+                    "enumDescriptions": [
+                        "Always use the bundled version of `<pytool-module>`.",
+                        "Use `<pytool-module>` from environment, fallback to bundled version only if `<pytool-module>` not available in the environment."
+                    ],
+                    "scope": "window",
+                    "type": "string"
+                },
+                "<pytool-module>.interpreter": {
+                    "default": [],
+                    "description": "When set to a path to python executable, extension will use that to launch the server and any subprocess.",
+                    "scope": "window",
+                    "items": {
+                        "type": "string"
+                    },
+                    "type": "array"
+                },
+                "<pytool-module>.showNotifications": {
+                    "default": "off",
+                    "description": "Controls when notifications are shown by this extension.",
+                    "enum": [
+                        "off",
+                        "onError",
+                        "inWarning",
+                        "always"
+                    ],
+                    "enumDescriptions": [
+                        "All notifications are turned off, any errors or warning are still available in the logs.",
+                        "Notifications are shown only in the case of an error.",
+                        "Notifications are shown for errors and warnings.",
+                        "Notifications are show for anything that the server chooses to show."
+                    ],
+                    "scope": "machine",
+                    "type": "string"
                 }
             }
         },
