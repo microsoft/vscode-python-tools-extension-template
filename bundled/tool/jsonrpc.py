@@ -13,9 +13,6 @@ import uuid
 from concurrent.futures import ThreadPoolExecutor
 from typing import BinaryIO, Dict, Sequence, Union
 
-# pylint: disable=wrong-import-position,import-error
-import utils
-
 CONTENT_LENGTH = "Content-Length: "
 RUNNER_SCRIPT = str(pathlib.Path(__file__).parent / "runner.py")
 
@@ -201,6 +198,15 @@ def get_or_start_json_rpc(
     return res
 
 
+class RpcRunResult:
+    """Object to hold result from running tool over RPC."""
+
+    def __init__(self, stdout: str, stderr: str, exception: str = None):
+        self.stdout = stdout
+        self.stderr = stderr
+        self.exception = exception
+
+
 # pylint: disable=too-many-arguments
 def run_over_json_rpc(
     workspace: str,
@@ -210,7 +216,7 @@ def run_over_json_rpc(
     use_stdin: bool,
     cwd: str,
     source: str = None,
-) -> utils.RunResult:
+) -> RpcRunResult:
     """Uses JSON-RPC to execute a command."""
     rpc: Union[JsonRpc, None] = get_or_start_json_rpc(workspace, interpreter, cwd)
     if not rpc:
@@ -233,14 +239,16 @@ def run_over_json_rpc(
     data = rpc.receive_data()
 
     if data["id"] != msg_id:
-        return utils.RunResult(
+        return RpcRunResult(
             "", f"Invalid result for request: {json.dumps(msg, indent=4)}"
         )
 
     if "error" in data:
-        return utils.RunResult(data["result"], data["error"])
+        if data.get("exception", False):
+            return RpcRunResult(data["result"], "", data["error"])
+        return RpcRunResult(data["result"], data["error"])
 
-    return utils.RunResult(data["result"], "")
+    return RpcRunResult(data["result"], "")
 
 
 def shutdown_json_rpc():

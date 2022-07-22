@@ -13,7 +13,7 @@ import {
 import { DEBUG_SERVER_SCRIPT_PATH, SERVER_SCRIPT_PATH } from './constants';
 import { traceError, traceInfo, traceVerbose } from './log/logging';
 import { getDebuggerPath } from './python';
-import { getExtensionSettings, getInterpreterFromSetting, getWorkspaceSettings, ISettings } from './settings';
+import { getExtensionSettings, getWorkspaceSettings, ISettings } from './settings';
 import { traceLevelToLSTrace } from './utilities';
 import { getWorkspaceFolders, isVirtualWorkspace } from './vscodeapi';
 
@@ -58,6 +58,9 @@ export async function createServer(
 
     // Set import strategy
     newEnv.LS_IMPORT_STRATEGY = workspaceSetting.importStrategy;
+
+    // Set notification type
+    newEnv.LS_SHOW_NOTIFICATION = workspaceSetting.showNotifications;
 
     const args =
         newEnv.USE_DEBUGPY === 'False'
