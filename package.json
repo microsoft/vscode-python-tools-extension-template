@@ -2,7 +2,7 @@
     "name": "<pytool-module>",
     "displayName": "<pytool-display-name>",
     "description": "Linting support for python files using `<pytool-module>`.",
-    "version": "2022.3.0-dev",
+    "version": "2022.0.0-dev",
     "preview": true,
     "serverInfo": {
         "name": "<pytool-display-name>",
