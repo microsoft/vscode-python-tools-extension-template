@@ -11,9 +11,9 @@ import {
     ServerOptions,
 } from 'vscode-languageclient/node';
 import { DEBUG_SERVER_SCRIPT_PATH, SERVER_SCRIPT_PATH } from './constants';
-import { traceInfo, traceVerbose } from './log/logging';
+import { traceError, traceInfo, traceVerbose } from './log/logging';
 import { getDebuggerPath } from './python';
-import { getWorkspaceSettings, ISettings } from './settings';
+import { getExtensionSettings, getWorkspaceSettings, ISettings } from './settings';
 import { traceLevelToLSTrace } from './utilities';
 import { getWorkspaceFolders, isVirtualWorkspace } from './vscodeapi';
 
@@ -42,21 +42,28 @@ export async function createServer(
     serverName: string,
     outputChannel: OutputChannel,
     initializationOptions: IInitOptions,
+    workspaceSetting: ISettings,
 ): Promise<LanguageClient> {
     const command = interpreter[0];
     const cwd = getProjectRoot().uri.fsPath;
 
     // Set debugger path needed for debugging python code.
-    const debugEnv = process.env;
+    const newEnv = { ...process.env };
     const debuggerPath = await getDebuggerPath();
-    if (debugEnv.USE_DEBUGPY && debuggerPath) {
-        debugEnv.DEBUGPY_PATH = debuggerPath;
+    if (newEnv.USE_DEBUGPY && debuggerPath) {
+        newEnv.DEBUGPY_PATH = debuggerPath;
     } else {
-        debugEnv.USE_DEBUGPY = 'False';
+        newEnv.USE_DEBUGPY = 'False';
     }
 
+    // Set import strategy
+    newEnv.LS_IMPORT_STRATEGY = workspaceSetting.importStrategy;
+
+    // Set notification type
+    newEnv.LS_SHOW_NOTIFICATION = workspaceSetting.showNotifications;
+
     const args =
-        debugEnv.USE_DEBUGPY === 'False'
+        newEnv.USE_DEBUGPY === 'False'
             ? interpreter.slice(1).concat([SERVER_SCRIPT_PATH])
             : interpreter.slice(1).concat([DEBUG_SERVER_SCRIPT_PATH]);
     traceInfo(`Server run command: ${[command, ...args].join(' ')}`);
@@ -64,7 +71,7 @@ export async function createServer(
     const serverOptions: ServerOptions = {
         command,
         args,
-        options: { cwd, env: debugEnv },
+        options: { cwd, env: newEnv },
     };
 
     // Options to control the language client
@@ -89,21 +96,38 @@ export async function createServer(
 
 let _disposables: Disposable[] = [];
 export async function restartServer(
-    interpreter: string[],
     serverId: string,
     serverName: string,
     outputChannel: OutputChannel,
-    initializationOptions: IInitOptions,
     lsClient?: LanguageClient,
-): Promise<LanguageClient> {
+): Promise<LanguageClient | undefined> {
     if (lsClient) {
         traceInfo(`Server: Stop requested`);
         await lsClient.stop();
         _disposables.forEach((d) => d.dispose());
         _disposables = [];
     }
-    const newLSClient = await createServer(interpreter, serverId, serverName, outputChannel, initializationOptions);
-    const workspaceSetting = await getWorkspaceSettings(getProjectRoot(), serverId);
+    const workspaceSetting = await getWorkspaceSettings(serverId, getProjectRoot(), true);
+    if (workspaceSetting.interpreter.length === 0) {
+        traceError(
+            'Python interpreter missing:\r\n' +
+                '[Option 1] Select python interpreter using the ms-python.python.\r\n' +
+                `[Option 2] Set an interpreter using "${serverId}.interpreter" setting.\r\n`,
+        );
+        return undefined;
+    }
+
+    const newLSClient = await createServer(
+        workspaceSetting.interpreter,
+        serverId,
+        serverName,
+        outputChannel,
+        {
+            settings: await getExtensionSettings(serverId, true),
+        },
+        workspaceSetting,
+    );
+
     newLSClient.trace = traceLevelToLSTrace(workspaceSetting.logLevel);
     traceInfo(`Server: Start requested.`);
     _disposables.push(

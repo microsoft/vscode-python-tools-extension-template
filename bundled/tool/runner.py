@@ -9,11 +9,25 @@ import pathlib
 import sys
 import traceback
 
+
+# **********************************************************
+# Update sys.path before importing any bundled libraries.
+# **********************************************************
+def update_sys_path(path_to_add: str, append: bool = True) -> None:
+    """Add given path to `sys.path`."""
+    if path_to_add not in sys.path and os.path.isdir(path_to_add):
+        if append:
+            sys.path.append(path_to_add)
+        else:
+            sys.path.insert(0, path_to_add)
+
+
 # Ensure that we can import LSP libraries, and other bundled linter libraries.
-lib_path = os.fspath(pathlib.Path(__file__).parent.parent / "libs")
-if lib_path not in sys.path and os.path.isdir(lib_path):
-    sys.path.append(lib_path)
-del lib_path
+update_sys_path(
+    os.fspath(pathlib.Path(__file__).parent.parent / "libs"),
+    os.getenv("LS_IMPORT_STRATEGY", "fromEnvironment") == "fromEnvironment",
+)
+
 
 # pylint: disable=wrong-import-position,import-error
 import jsonrpc
@@ -31,6 +45,7 @@ while not EXIT_NOW:
         continue
 
     if method == "run":
+        is_exception = False
         # This is needed to preserve sys.path, pylint modifies
         # sys.path and that might not work for this scenario
         # next time around.
@@ -49,11 +64,13 @@ while not EXIT_NOW:
                     source=msg["source"] if "source" in msg else None,
                 )
             except Exception:  # pylint: disable=broad-except
-                result = utils.RunResult("", traceback.format_exc())
+                result = utils.RunResult("", traceback.format_exc(chain=True))
+                is_exception = True
 
         response = {"id": msg["id"]}
         if result.stderr:
             response["error"] = result.stderr
+            response["exception"] = is_exception
         elif result.stdout:
             response["result"] = result.stdout
 

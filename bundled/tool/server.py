@@ -9,6 +9,7 @@ import os
 import pathlib
 import re
 import sys
+import traceback
 from typing import Sequence
 
 
@@ -25,7 +26,10 @@ def update_sys_path(path_to_add: str, append: bool = True) -> None:
 
 
 # Ensure that we can import LSP libraries, and other bundled libraries.
-update_sys_path(os.fspath(pathlib.Path(__file__).parent.parent / "libs"))
+update_sys_path(
+    os.fspath(pathlib.Path(__file__).parent.parent / "libs"),
+    os.getenv("LS_IMPORT_STRATEGY", "fromEnvironment") == "fromEnvironment",
+)
 
 # **********************************************************
 # Imports needed for the language server goes below this.
@@ -250,14 +254,14 @@ def _match_line_endings(document: workspace.Document, text: str) -> str:
 @LSP_SERVER.feature(lsp.INITIALIZE)
 def initialize(params: lsp.InitializeParams) -> None:
     """LSP handler for initialize request."""
-    LSP_SERVER.show_message_log(f"CWD Server: {os.getcwd()}")
+    log_to_output(f"CWD Server: {os.getcwd()}")
 
     paths = "\r\n   ".join(sys.path)
-    LSP_SERVER.show_message_log(f"sys.path used to run Server:\r\n   {paths}")
+    log_to_output(f"sys.path used to run Server:\r\n   {paths}")
 
     settings = params.initialization_options["settings"]
     _update_workspace_settings(settings)
-    LSP_SERVER.show_message_log(
+    log_to_output(
         f"Settings used to run Server:\r\n{json.dumps(settings, indent=4, ensure_ascii=False)}\r\n"
     )
 
@@ -371,19 +375,22 @@ def _run_tool_on_document(
 
     if use_path:
         # This mode is used when running executables.
-        LSP_SERVER.show_message_log(" ".join(argv))
-        LSP_SERVER.show_message_log(f"CWD Server: {cwd}")
+        log_to_output(" ".join(argv))
+        log_to_output(f"CWD Server: {cwd}")
         result = utils.run_path(
             argv=argv,
             use_stdin=use_stdin,
             cwd=cwd,
             source=document.source.replace("\r\n", "\n"),
         )
+        if result.stderr:
+            log_to_output(result.stderr)
     elif use_rpc:
         # This mode is used if the interpreter running this server is different from
         # the interpreter used for running this server.
-        LSP_SERVER.show_message_log(" ".join(settings["interpreter"] + ["-m"] + argv))
-        LSP_SERVER.show_message_log(f"CWD Linter: {cwd}")
+        log_to_output(" ".join(settings["interpreter"] + ["-m"] + argv))
+        log_to_output(f"CWD Linter: {cwd}")
+
         result = jsonrpc.run_over_json_rpc(
             workspace=code_workspace,
             interpreter=settings["interpreter"],
@@ -393,29 +400,38 @@ def _run_tool_on_document(
             cwd=cwd,
             source=document.source,
         )
+        if result.exception:
+            log_error(result.exception)
+            result = utils.RunResult(result.stdout, result.stderr)
+        elif result.stderr:
+            log_to_output(result.stderr)
     else:
         # In this mode the tool is run as a module in the same process as the language server.
-        LSP_SERVER.show_message_log(" ".join([sys.executable, "-m"] + argv))
-        LSP_SERVER.show_message_log(f"CWD Linter: {cwd}")
+        log_to_output(" ".join([sys.executable, "-m"] + argv))
+        log_to_output(f"CWD Linter: {cwd}")
         # This is needed to preserve sys.path, in cases where the tool modifies
         # sys.path and that might not work for this scenario next time around.
         with utils.substitute_attr(sys, "path", sys.path[:]):
-            # TODO: `utils.run_module` is equivalent to running `python -m <pytool-module>`.
-            # If your tool supports a programmatic API then replace the function below
-            # with code for your tool. You can also use `utils.run_api` helper, which
-            # handles changing working directories, managing io streams, etc.
-            # Also update `_run_tool` function and `utils.run_module` in `runner.py`.
-            result = utils.run_module(
-                module=TOOL_MODULE,
-                argv=argv,
-                use_stdin=use_stdin,
-                cwd=cwd,
-                source=document.source,
-            )
+            try:
+                # TODO: `utils.run_module` is equivalent to running `python -m <pytool-module>`.
+                # If your tool supports a programmatic API then replace the function below
+                # with code for your tool. You can also use `utils.run_api` helper, which
+                # handles changing working directories, managing io streams, etc.
+                # Also update `_run_tool` function and `utils.run_module` in `runner.py`.
+                result = utils.run_module(
+                    module=TOOL_MODULE,
+                    argv=argv,
+                    use_stdin=use_stdin,
+                    cwd=cwd,
+                    source=document.source,
+                )
+            except Exception:
+                log_error(traceback.format_exc(chain=True))
+                raise
+        if result.stderr:
+            log_to_output(result.stderr)
 
-    if result.stderr:
-        LSP_SERVER.show_message_log(result.stderr, msg_type=lsp.MessageType.Error)
-    LSP_SERVER.show_message_log(f"{document.uri} :\r\n{result.stdout}")
+    log_to_output(f"{document.uri} :\r\n{result.stdout}")
     return result
 
 
@@ -449,14 +465,16 @@ def _run_tool(extra_args: Sequence[str]) -> utils.RunResult:
 
     if use_path:
         # This mode is used when running executables.
-        LSP_SERVER.show_message_log(" ".join(argv))
-        LSP_SERVER.show_message_log(f"CWD Server: {cwd}")
+        log_to_output(" ".join(argv))
+        log_to_output(f"CWD Server: {cwd}")
         result = utils.run_path(argv=argv, use_stdin=True, cwd=cwd)
+        if result.stderr:
+            log_to_output(result.stderr)
     elif use_rpc:
         # This mode is used if the interpreter running this server is different from
         # the interpreter used for running this server.
-        LSP_SERVER.show_message_log(" ".join(settings["interpreter"] + ["-m"] + argv))
-        LSP_SERVER.show_message_log(f"CWD Linter: {cwd}")
+        log_to_output(" ".join(settings["interpreter"] + ["-m"] + argv))
+        log_to_output(f"CWD Linter: {cwd}")
         result = jsonrpc.run_over_json_rpc(
             workspace=code_workspace,
             interpreter=settings["interpreter"],
@@ -465,27 +483,66 @@ def _run_tool(extra_args: Sequence[str]) -> utils.RunResult:
             use_stdin=True,
             cwd=cwd,
         )
+        if result.exception:
+            log_error(result.exception)
+            result = utils.RunResult(result.stdout, result.stderr)
+        elif result.stderr:
+            log_to_output(result.stderr)
     else:
         # In this mode the tool is run as a module in the same process as the language server.
-        LSP_SERVER.show_message_log(" ".join([sys.executable, "-m"] + argv))
-        LSP_SERVER.show_message_log(f"CWD Linter: {cwd}")
+        log_to_output(" ".join([sys.executable, "-m"] + argv))
+        log_to_output(f"CWD Linter: {cwd}")
         # This is needed to preserve sys.path, in cases where the tool modifies
         # sys.path and that might not work for this scenario next time around.
         with utils.substitute_attr(sys, "path", sys.path[:]):
-            # TODO: `utils.run_module` is equivalent to running `python -m <pytool-module>`.
-            # If your tool supports a programmatic API then replace the function below
-            # with code for your tool. You can also use `utils.run_api` helper, which
-            # handles changing working directories, managing io streams, etc.
-            # Also update `_run_tool_on_document` function and `utils.run_module` in `runner.py`.
-            result = utils.run_module(
-                module=TOOL_MODULE, argv=argv, use_stdin=True, cwd=cwd
-            )
+            try:
+                # TODO: `utils.run_module` is equivalent to running `python -m <pytool-module>`.
+                # If your tool supports a programmatic API then replace the function below
+                # with code for your tool. You can also use `utils.run_api` helper, which
+                # handles changing working directories, managing io streams, etc.
+                # Also update `_run_tool_on_document` function and `utils.run_module` in `runner.py`.
+                result = utils.run_module(
+                    module=TOOL_MODULE, argv=argv, use_stdin=True, cwd=cwd
+                )
+            except Exception:
+                log_error(traceback.format_exc(chain=True))
+                raise
+        if result.stderr:
+            log_to_output(result.stderr)
 
-    if result.stderr:
-        LSP_SERVER.show_message_log(result.stderr, msg_type=lsp.MessageType.Error)
-    LSP_SERVER.show_message_log(f"\r\n{result.stdout}\r\n")
+    log_to_output(f"\r\n{result.stdout}\r\n")
     return result
 
 
+# *****************************************************
+# Logging and notification.
+# *****************************************************
+def log_to_output(
+    message: str, msg_type: lsp.MessageType = lsp.MessageType.Log
+) -> None:
+    LSP_SERVER.show_message_log(message, msg_type)
+
+
+def log_error(message: str) -> None:
+    LSP_SERVER.show_message_log(message, lsp.MessageType.Error)
+    if os.getenv("LS_SHOW_NOTIFICATION", "off") in ["onError", "onWarning", "always"]:
+        LSP_SERVER.show_message(message, lsp.MessageType.Error)
+
+
+def log_warning(message: str) -> None:
+    LSP_SERVER.show_message_log(message, lsp.MessageType.Warning)
+    if os.getenv("LS_SHOW_NOTIFICATION", "off") in ["onWarning", "always"]:
+        LSP_SERVER.show_message(message, lsp.MessageType.Warning)
+
+
+def log_always(message: str) -> None:
+    LSP_SERVER.show_message_log(message, lsp.MessageType.Info)
+    if os.getenv("LS_SHOW_NOTIFICATION", "off") in ["always"]:
+        LSP_SERVER.show_message(message, lsp.MessageType.Info)
+
+
+# *****************************************************
+# Start the server.
+# *****************************************************
 if __name__ == "__main__":
     LSP_SERVER.start_io()
