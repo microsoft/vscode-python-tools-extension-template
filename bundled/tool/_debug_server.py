@@ -8,7 +8,7 @@ import runpy
 import sys
 
 
-def update_sys_path(path_to_add: str, append: bool = True) -> None:
+def update_sys_path(path_to_add: str) -> None:
     """Add given path to `sys.path`."""
     if path_to_add not in sys.path and os.path.isdir(path_to_add):
         sys.path.append(path_to_add)
