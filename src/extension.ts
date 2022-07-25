@@ -20,6 +20,7 @@ import {
 } from './common/settings';
 import { loadServerDefaults } from './common/setup';
 import { createOutputChannel, onDidChangeConfiguration, registerCommand } from './common/vscodeapi';
+import { getProjectRoot } from './common/utilities';
 
 let lsClient: LanguageClient | undefined;
 export async function activate(context: vscode.ExtensionContext): Promise<void> {
@@ -58,7 +59,7 @@ export async function activate(context: vscode.ExtensionContext): Promise<void> 
             if (interpreter || interpreterDetails.path) {
                 await runServer();
             } else {
-                runPythonExtensionCommand('python.triggerEnvSelection');
+                runPythonExtensionCommand('python.triggerEnvSelection', getProjectRoot().uri);
             }
         }),
     );
