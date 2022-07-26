@@ -56,7 +56,7 @@ export async function activate(context: vscode.ExtensionContext): Promise<void> 
         registerCommand(`${serverId}.restart`, async () => {
             const interpreter = getInterpreterFromSetting(serverId);
             const interpreterDetails = await getInterpreterDetails();
-            if (interpreter || interpreterDetails.path) {
+            if (interpreter?.length || interpreterDetails.path) {
                 await runServer();
             } else {
                 runPythonExtensionCommand('python.triggerEnvSelection', getProjectRoot().uri);

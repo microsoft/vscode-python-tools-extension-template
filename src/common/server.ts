@@ -1,8 +1,7 @@
 // Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT License.
 
-import { dirname } from 'path';
-import { Disposable, OutputChannel, WorkspaceFolder } from 'vscode';
+import { Disposable, OutputChannel } from 'vscode';
 import { State } from 'vscode-languageclient';
 import {
     LanguageClient,
@@ -15,7 +14,7 @@ import { traceError, traceInfo, traceVerbose } from './log/logging';
 import { getDebuggerPath } from './python';
 import { getExtensionSettings, getWorkspaceSettings, ISettings } from './settings';
 import { getProjectRoot, traceLevelToLSTrace } from './utilities';
-import { getWorkspaceFolders, isVirtualWorkspace } from './vscodeapi';
+import { isVirtualWorkspace } from './vscodeapi';
 
 export type IInitOptions = { settings: ISettings[] };
 

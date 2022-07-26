@@ -43,6 +43,9 @@ After finishing the getting started part, this template would have added the fol
     - `mytool.logLevel`
     - `mytool.args`
     - `mytool.path`
+    - `mytool.importStrategy`
+    - `mytool.interpreter`
+    - `mytool.showNotification`
 1. Following triggers for extension activation:
     - On Language `python`.
     - On File with `.py` extension found in the opened workspace.
