@@ -1,8 +1,7 @@
 // Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT License.
 
-import { dirname } from 'path';
-import { Disposable, OutputChannel, WorkspaceFolder } from 'vscode';
+import { Disposable, OutputChannel } from 'vscode';
 import { State } from 'vscode-languageclient';
 import {
     LanguageClient,
@@ -14,27 +13,10 @@ import { DEBUG_SERVER_SCRIPT_PATH, SERVER_SCRIPT_PATH } from './constants';
 import { traceError, traceInfo, traceVerbose } from './log/logging';
 import { getDebuggerPath } from './python';
 import { getExtensionSettings, getWorkspaceSettings, ISettings } from './settings';
-import { traceLevelToLSTrace } from './utilities';
-import { getWorkspaceFolders, isVirtualWorkspace } from './vscodeapi';
+import { getProjectRoot, traceLevelToLSTrace } from './utilities';
+import { isVirtualWorkspace } from './vscodeapi';
 
 export type IInitOptions = { settings: ISettings[] };
-
-function getProjectRoot(): WorkspaceFolder {
-    const workspaces: readonly WorkspaceFolder[] = getWorkspaceFolders();
-    if (workspaces.length === 1) {
-        return workspaces[0];
-    } else {
-        let root = workspaces[0].uri.fsPath;
-        let rootWorkspace = workspaces[0];
-        for (const w of workspaces) {
-            if (root.length > w.uri.fsPath.length) {
-                root = w.uri.fsPath;
-                rootWorkspace = w;
-            }
-        }
-        return rootWorkspace;
-    }
-}
 
 export async function createServer(
     interpreter: string[],
