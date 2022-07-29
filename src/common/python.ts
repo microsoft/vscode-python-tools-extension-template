@@ -69,10 +69,6 @@ interface IExtensionApi {
     };
     environment: {
         getActiveEnvironmentPath(resource?: Uri | undefined): Promise<EnvPathType | undefined>;
-        getEnvironmentDetails(
-            path: string,
-            options?: EnvironmentDetailsOptions,
-        ): Promise<EnvironmentDetails | undefined>;
         onDidActiveEnvironmentChanged: Event<ActiveEnvironmentChangedParams>;
     };
 }
@@ -121,12 +117,9 @@ export async function initializePython(disposables: Disposable[]): Promise<void>
 
 export async function getInterpreterDetails(resource?: Uri): Promise<IInterpreterDetails> {
     const api = await getPythonExtensionAPI();
-    const interpreterPath = await api?.environment.getActiveEnvironmentPath(resource);
-    if (interpreterPath) {
-        const details = await api?.environment.getEnvironmentDetails(interpreterPath.path);
-        if (details) {
-            return { path: [details.interpreterPath], resource };
-        }
+    const interpreter = await api?.environment.getActiveEnvironmentPath(resource);
+    if (interpreter && interpreter.pathType === 'interpreterPath') {
+        return { path: [interpreter.path], resource };
     }
     return { path: undefined, resource };
 }
