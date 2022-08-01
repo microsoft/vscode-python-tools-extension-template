@@ -82,8 +82,8 @@ def _update_npm_packages(session: nox.Session) -> None:
 
     new_package_json = json.dumps(package_json, indent=4)
     # JSON dumps uses \n for line ending on all platforms by default
-    if not new_package_json.endswith('\n'):
-        new_package_json += '\n'
+    if not new_package_json.endswith("\n"):
+        new_package_json += "\n"
     package_json_path.write_text(new_package_json, encoding="utf-8")
     session.run("npm", "install", external=True)
 
