@@ -5,23 +5,20 @@ updates:
     schedule:
       interval: monthly
     labels:
-      - 'skip news'
-      - 'debt'
+      - 'no-changelog'
 
   - package-ecosystem: 'pip'
     directory: /src/test/python_tests
     schedule:
       interval: daily
     labels:
-      - 'skip news'
-      - 'debt'
+      - 'no-changelog'
 
   - package-ecosystem: 'pip'
     directory: /
     schedule:
       interval: daily
     labels:
-      - 'news'
       - 'debt'
     commit-message:
       include: 'scope'
@@ -32,8 +29,7 @@ updates:
     schedule:
       interval: monthly
     labels:
-      - 'skip news'
-      - 'debt'
+      - 'no-changelog'
     ignore:
       - dependency-name: '@types/vscode'
       - dependency-name: '@types/node'
