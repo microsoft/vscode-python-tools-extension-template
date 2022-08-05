@@ -55,8 +55,8 @@ LSP_SERVER = server.LanguageServer(max_workers=MAX_WORKERS)
 #  https://microsoft.github.io/language-server-protocol/specifications/specification-3-16/
 #
 #  Sample implementations:
-#  Pylint: https://github.com/microsoft/vscode-pylint/blob/main/bundled/linter
-#  Black: https://github.com/microsoft/vscode-black-formatter/blob/main/bundled/formatter
+#  Pylint: https://github.com/microsoft/vscode-pylint/blob/main/bundled/tool
+#  Black: https://github.com/microsoft/vscode-black-formatter/blob/main/bundled/tool
 #  isort: https://github.com/microsoft/vscode-isort/blob/main/bundled/formatter
 
 # TODO: Update TOOL_MODULE with the module name for your tool.
@@ -79,7 +79,7 @@ TOOL_ARGS = []  # default arguments always passed to your tool.
 # **********************************************************
 
 #  See `pylint` implementation for a full featured linter extension:
-#  Pylint: https://github.com/microsoft/vscode-pylint/blob/main/bundled/linter
+#  Pylint: https://github.com/microsoft/vscode-pylint/blob/main/bundled/tool
 
 
 @LSP_SERVER.feature(lsp.TEXT_DOCUMENT_DID_OPEN)
@@ -184,7 +184,7 @@ def _get_severity(*_codes: list[str]) -> lsp.DiagnosticSeverity:
 # Formatting features start here
 # **********************************************************
 #  Sample implementations:
-#  Black: https://github.com/microsoft/vscode-black-formatter/blob/main/bundled/formatter
+#  Black: https://github.com/microsoft/vscode-black-formatter/blob/main/bundled/tool
 
 
 @LSP_SERVER.feature(lsp.FORMATTING)
@@ -316,6 +316,7 @@ def _get_settings_by_document(document: workspace.Document | None):
 def _run_tool_on_document(
     document: workspace.Document,
     use_stdin: bool = False,
+    extra_args: Sequence[str] = [],
 ) -> utils.RunResult | None:
     """Runs tool on the given document.
 
@@ -356,7 +357,7 @@ def _run_tool_on_document(
         # process then run as module.
         argv = [TOOL_MODULE]
 
-    argv += TOOL_ARGS + settings["args"]
+    argv += TOOL_ARGS + settings["args"] + extra_args
 
     if use_stdin:
         # TODO: update these to pass the appropriate arguments to provide document contents
