@@ -26,11 +26,13 @@ async function getDebugServerOptions(
     },
 ): Promise<Executable> {
     // Set debugger path needed for debugging python code.
-    env.DEBUGPY_PATH = await getDebuggerPath();
+    if (env.DEBUGPY_ENABLED !== 'False') {
+        env.DEBUGPY_PATH = await getDebuggerPath();
+    }
 
     const command = interpreter[0];
     const args = interpreter.slice(1).concat([DEBUG_SERVER_SCRIPT_PATH]);
-    traceLog(`Server run command [Debug]: ${[command, ...args].join(' ')}`);
+    traceLog(`Server Command [DEBUG]: ${[command, ...args].join(' ')}`);
 
     return {
         command,
@@ -48,7 +50,7 @@ async function getRunServerOptions(
 ): Promise<Executable> {
     const command = interpreter[0];
     const args = interpreter.slice(1).concat([SERVER_SCRIPT_PATH]);
-    traceLog(`Server run command: ${[command, ...args].join(' ')}`);
+    traceLog(`Server Command [RUN]: ${[command, ...args].join(' ')}`);
 
     return Promise.resolve({
         command,
