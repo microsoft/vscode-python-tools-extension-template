@@ -304,10 +304,10 @@ def _get_settings_by_document(document: workspace.Document | None):
     # COMMENT: about non workspace files
     while document_workspace != document_workspace.parent:
         if str(document_workspace) in workspaces:
-            break
+            return WORKSPACE_SETTINGS[str(document_workspace)]
         document_workspace = document_workspace.parent
 
-    return WORKSPACE_SETTINGS[str(document_workspace)]
+    return list(WORKSPACE_SETTINGS.values())[0]
 
 
 # *****************************************************
@@ -316,6 +316,7 @@ def _get_settings_by_document(document: workspace.Document | None):
 def _run_tool_on_document(
     document: workspace.Document,
     use_stdin: bool = False,
+    extra_args: Sequence[str] = [],
 ) -> utils.RunResult | None:
     """Runs tool on the given document.
 
@@ -356,7 +357,7 @@ def _run_tool_on_document(
         # process then run as module.
         argv = [TOOL_MODULE]
 
-    argv += TOOL_ARGS + settings["args"]
+    argv += TOOL_ARGS + settings["args"] + extra_args
 
     if use_stdin:
         # TODO: update these to pass the appropriate arguments to provide document contents

@@ -15,26 +15,24 @@ def update_sys_path(path_to_add: str) -> None:
 
 
 # Ensure debugger is loaded before we load anything else, to debug initialization.
-if os.getenv("USE_DEBUGPY", None) in ["True", "TRUE", "1", "T"]:
-    debugger_path = os.getenv("DEBUGPY_PATH", None)
+debugger_path = os.getenv("DEBUGPY_PATH", None)
+if debugger_path:
+    if debugger_path.endswith("debugpy"):
+        debugger_path = os.fspath(pathlib.Path(debugger_path).parent)
 
-    if debugger_path:
-        if debugger_path.endswith("debugpy"):
-            debugger_path = os.fspath(pathlib.Path(debugger_path).parent)
+    update_sys_path(debugger_path)
 
-        update_sys_path(debugger_path)
+    # pylint: disable=wrong-import-position,import-error
+    import debugpy
 
-        # pylint: disable=wrong-import-position,import-error
-        import debugpy
+    # 5678 is the default port, If you need to change it update it here
+    # and in launch.json.
+    debugpy.connect(5678)
 
-        # 5678 is the default port, If you need to change it update it here
-        # and in launch.json.
-        debugpy.connect(5678)
-
-        # This will ensure that execution is paused as soon as the debugger
-        # connects to VS Code. If you don't want to pause here comment this
-        # line and set breakpoints as appropriate.
-        debugpy.breakpoint()
+    # This will ensure that execution is paused as soon as the debugger
+    # connects to VS Code. If you don't want to pause here comment this
+    # line and set breakpoints as appropriate.
+    debugpy.breakpoint()
 
 SERVER_PATH = os.fspath(pathlib.Path(__file__).parent / "server.py")
 # NOTE: Set breakpoint in `server.py` before continuing.
