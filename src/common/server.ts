@@ -1,22 +1,63 @@
 // Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT License.
-
 import { Disposable, OutputChannel } from 'vscode';
 import { State } from 'vscode-languageclient';
 import {
+    Executable,
     LanguageClient,
     LanguageClientOptions,
     RevealOutputChannelOn,
     ServerOptions,
 } from 'vscode-languageclient/node';
 import { DEBUG_SERVER_SCRIPT_PATH, SERVER_SCRIPT_PATH } from './constants';
-import { traceError, traceInfo, traceVerbose } from './log/logging';
+import { traceError, traceInfo, traceLog, traceVerbose } from './log/logging';
 import { getDebuggerPath } from './python';
 import { getExtensionSettings, getWorkspaceSettings, ISettings } from './settings';
 import { getProjectRoot, traceLevelToLSTrace } from './utilities';
 import { isVirtualWorkspace } from './vscodeapi';
 
 export type IInitOptions = { settings: ISettings[] };
+
+async function getDebugServerOptions(
+    interpreter: string[],
+    cwd: string,
+    env: {
+        [x: string]: string | undefined;
+    },
+): Promise<Executable> {
+    // Set debugger path needed for debugging python code.
+    if (env.DEBUGPY_ENABLED !== 'False') {
+        env.DEBUGPY_PATH = await getDebuggerPath();
+    }
+
+    const command = interpreter[0];
+    const args = interpreter.slice(1).concat([DEBUG_SERVER_SCRIPT_PATH]);
+    traceLog(`Server Command [DEBUG]: ${[command, ...args].join(' ')}`);
+
+    return {
+        command,
+        args,
+        options: { cwd, env },
+    };
+}
+
+async function getRunServerOptions(
+    interpreter: string[],
+    cwd: string,
+    env: {
+        [x: string]: string | undefined;
+    },
+): Promise<Executable> {
+    const command = interpreter[0];
+    const args = interpreter.slice(1).concat([SERVER_SCRIPT_PATH]);
+    traceLog(`Server Command [RUN]: ${[command, ...args].join(' ')}`);
+
+    return Promise.resolve({
+        command,
+        args,
+        options: { cwd, env },
+    });
+}
 
 export async function createServer(
     interpreter: string[],
@@ -26,17 +67,8 @@ export async function createServer(
     initializationOptions: IInitOptions,
     workspaceSetting: ISettings,
 ): Promise<LanguageClient> {
-    const command = interpreter[0];
     const cwd = getProjectRoot().uri.fsPath;
-
-    // Set debugger path needed for debugging python code.
     const newEnv = { ...process.env };
-    const debuggerPath = await getDebuggerPath();
-    if (newEnv.USE_DEBUGPY && debuggerPath) {
-        newEnv.DEBUGPY_PATH = debuggerPath;
-    } else {
-        newEnv.USE_DEBUGPY = 'False';
-    }
 
     // Set import strategy
     newEnv.LS_IMPORT_STRATEGY = workspaceSetting.importStrategy;
@@ -44,16 +76,9 @@ export async function createServer(
     // Set notification type
     newEnv.LS_SHOW_NOTIFICATION = workspaceSetting.showNotifications;
 
-    const args =
-        newEnv.USE_DEBUGPY === 'False'
-            ? interpreter.slice(1).concat([SERVER_SCRIPT_PATH])
-            : interpreter.slice(1).concat([DEBUG_SERVER_SCRIPT_PATH]);
-    traceInfo(`Server run command: ${[command, ...args].join(' ')}`);
-
     const serverOptions: ServerOptions = {
-        command,
-        args,
-        options: { cwd, env: newEnv },
+        run: await getRunServerOptions(interpreter, cwd, { ...newEnv }),
+        debug: await getDebugServerOptions(interpreter, cwd, { ...newEnv }),
     };
 
     // Options to control the language client
