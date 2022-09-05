@@ -57,7 +57,7 @@ LSP_SERVER = server.LanguageServer(max_workers=MAX_WORKERS)
 #  Sample implementations:
 #  Pylint: https://github.com/microsoft/vscode-pylint/blob/main/bundled/tool
 #  Black: https://github.com/microsoft/vscode-black-formatter/blob/main/bundled/tool
-#  isort: https://github.com/microsoft/vscode-isort/blob/main/bundled/formatter
+#  isort: https://github.com/microsoft/vscode-isort/blob/main/bundled/tool
 
 # TODO: Update TOOL_MODULE with the module name for your tool.
 # e.g, TOOL_MODULE = "pylint"
