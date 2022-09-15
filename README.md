@@ -67,7 +67,7 @@ References, to other extension created by our team using the template:
 -   Protocol reference: https://microsoft.github.io/language-server-protocol/specifications/specification-3-16/
 -   Implementation showing how to handle Linting on file `open`, `save`, and `close`. [Pylint](https://github.com/microsoft/vscode-pylint/tree/main/bundled/tool)
 -   Implementation showing how to handle Formatting. [Black Formatter](https://github.com/microsoft/vscode-black-formatter/tree/main/bundled/tool)
--   Implementation showing how to handle Code Actions. [isort](https://github.com/microsoft/vscode-isort/blob/main/bundled/formatter)
+-   Implementation showing how to handle Code Actions. [isort](https://github.com/microsoft/vscode-isort/blob/main/bundled/tool)
 
 ## Building and Run the extension
 
