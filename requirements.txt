@@ -7,7 +7,7 @@
 packaging==21.3 \
     --hash=sha256:dd47c42927d89ab911e606518907cc2d3a1f38bbd026385970643f9c5b8ecfeb \
     --hash=sha256:ef103e05f519cdc783ae24ea4e2e0f508a9c99b2d4969652eed6a2e1ea5bd522
-    # via -r ./requirements.in
+    # via -r requirements.in
 pydantic==1.9.2 \
     --hash=sha256:1061c6ee6204f4f5a27133126854948e3b3d51fcc16ead2e5d04378c199b2f44 \
     --hash=sha256:19b5686387ea0d1ea52ecc4cffb71abb21702c5e5b2ac626fd4dbaa0834aa49d \
@@ -45,10 +45,10 @@ pydantic==1.9.2 \
     --hash=sha256:fafe841be1103f340a24977f61dee76172e4ae5f647ab9e7fd1e1fca51524f08 \
     --hash=sha256:ff68fc85355532ea77559ede81f35fff79a6a5543477e168ab3a381887caea76
     # via pygls
-pygls==0.12.1 \
-    --hash=sha256:3b9da223fd6e7624aed047dec2cbb6ab471c1441d5b48369daad012594c11610 \
-    --hash=sha256:733167e836e6b73b3f0fb8ae254ca168ea8d3e84a7302ea0e1fc91a7a1672547
-    # via -r ./requirements.in
+pygls==0.12.2 \
+    --hash=sha256:48465ba74a32d50fbc110111ee0b60721c169f5bd9d8eedc582931ff765d6bc6 \
+    --hash=sha256:ad83aea5c45c915b6b0b47ef0faca3c3b4778d087110c8e912da14b9f1c9f9d7
+    # via -r requirements.in
 pyparsing==3.0.9 \
     --hash=sha256:2b020ecf7d21b687f219b71ecad3631f644a47f01403fa1d1036b0c6416d70fb \
     --hash=sha256:5026bae9a10eeaefb61dab2f09052b9f4307d44aee4eda64b309723d8d206bbc
