@@ -27,7 +27,7 @@
         "<pytool-module>"
     ],
     "engines": {
-        "vscode": "^1.64.0"
+        "vscode": "^1.72.0"
     },
     "categories": [
         "Programming Languages",
