@@ -204,13 +204,7 @@ interface IExtensionApi {
         getRemoteLauncherCommand(host: string, port: number, waitUntilDebuggerAttaches: boolean): Promise<string[]>;
         getDebuggerPackagePath(): Promise<string | undefined>;
     };
-    settings: {
-        readonly onDidChangeExecutionDetails: Event<Uri | undefined>;
-        getExecutionDetails(resource?: Uri | undefined): {
-            execCommand: string[] | undefined;
-        };
-    };
-    environment: {
+    environments: {
         getActiveEnvironmentPath(resource?: Resource): EnvironmentPath;
         resolveEnvironment(
             environment: Environment | EnvironmentPath | string,
@@ -248,7 +242,7 @@ export async function initializePython(disposables: Disposable[]): Promise<void>
 
         if (api) {
             disposables.push(
-                api.environment.onDidChangeActiveEnvironmentPath((e) => {
+                api.environments.onDidChangeActiveEnvironmentPath((e) => {
                     onDidChangePythonInterpreterEvent.fire({ path: [e.path], resource: e.resource?.uri });
                 }),
             );
@@ -263,7 +257,7 @@ export async function initializePython(disposables: Disposable[]): Promise<void>
 
 export async function getInterpreterDetails(resource?: Uri): Promise<IInterpreterDetails> {
     const api = await getPythonExtensionAPI();
-    const environment = await api?.environment.resolveEnvironment(api?.environment.getActiveEnvironmentPath(resource));
+    const environment = await api?.environments.resolveEnvironment(api?.environments.getActiveEnvironmentPath(resource));
     if (environment?.executable.uri) {
         return { path: [environment?.executable.uri.fsPath], resource };
     }
