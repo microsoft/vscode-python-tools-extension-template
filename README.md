@@ -58,16 +58,16 @@ Open `bundled/tool/server.py`, here is where you will do most of the changes. Lo
 
 Also look for `TODO` in other locations in the entire template:
 
--   `bundled/tool/runner.py` : You may need to update this in some special cases.
--   `src/test/python_tests/test_server.py` : This is where you will write tests. There are two incomplete examples provided there to get you started.
--   All the markdown files in this template have some `TODO` items, be sure to check them out as well. That includes updating the LICENSE file, even if you want to keep it MIT License.
+- `bundled/tool/runner.py` : You may need to update this in some special cases.
+- `src/test/python_tests/test_server.py` : This is where you will write tests. There are two incomplete examples provided there to get you started.
+- All the markdown files in this template have some `TODO` items, be sure to check them out as well. That includes updating the LICENSE file, even if you want to keep it MIT License.
 
 References, to other extension created by our team using the template:
 
--   Protocol reference: https://microsoft.github.io/language-server-protocol/specifications/specification-3-16/
--   Implementation showing how to handle Linting on file `open`, `save`, and `close`. [Pylint](https://github.com/microsoft/vscode-pylint/tree/main/bundled/tool)
--   Implementation showing how to handle Formatting. [Black Formatter](https://github.com/microsoft/vscode-black-formatter/tree/main/bundled/tool)
--   Implementation showing how to handle Code Actions. [isort](https://github.com/microsoft/vscode-isort/blob/main/bundled/tool)
+- Protocol reference: <https://microsoft.github.io/language-server-protocol/specifications/specification-3-16/>
+- Implementation showing how to handle Linting on file `open`, `save`, and `close`. [Pylint](https://github.com/microsoft/vscode-pylint/tree/main/bundled/tool)
+- Implementation showing how to handle Formatting. [Black Formatter](https://github.com/microsoft/vscode-black-formatter/tree/main/bundled/tool)
+- Implementation showing how to handle Code Actions. [isort](https://github.com/microsoft/vscode-isort/blob/main/bundled/tool)
 
 ## Building and Run the extension
 
@@ -103,21 +103,21 @@ Run `nox --session lint` to run linting on both Python and TypeScript code. Plea
 
 ## Packaging and Publishing
 
-1.  Update various fields in `package.json`. At minimum, check the following fields and update them accordingly. See [extension manifest reference](https://code.visualstudio.com/api/references/extension-manifest) to add more fields:
-    -   `"publisher"`: Update this to your publisher id from https://marketplace.visualstudio.com/.
-    -   `"version"`: See https://semver.org/ for details of requirements and limitations for this field.
-    -   `"license"`: Update license as per your project. Defaults to `MIT`.
-    -   `"keywords"`: Update keywords for your project, these will be used when searching in the VS Code marketplace.
-    -   `"categories"`: Update categories for your project, makes it easier to filter in the VS Code marketplace.
-    -   `"homepage"`, `"repository"`, and `"bugs"` : Update URLs for these fields to point to your project.
-    -   **Optional** Add `"icon"` field with relative path to a image file to use as icon for this project.
-1.  Make sure to check the following markdown files:
-    -   **REQUIRED** First time only: `CODE_OF_CONDUCT.md`, `LICENSE`, `SUPPORT.md`, `SECURITY.md`
-    -   Every Release: `CHANGELOG.md`
-1.  Build package using `nox --session build_package`.
-1.  Take the generated `.vsix` file and upload it to your extension management page https://marketplace.visualstudio.com/manage.
+1. Update various fields in `package.json`. At minimum, check the following fields and update them accordingly. See [extension manifest reference](https://code.visualstudio.com/api/references/extension-manifest) to add more fields:
+    - `"publisher"`: Update this to your publisher id from <https://marketplace.visualstudio.com/>.
+    - `"version"`: See <https://semver.org/> for details of requirements and limitations for this field.
+    - `"license"`: Update license as per your project. Defaults to `MIT`.
+    - `"keywords"`: Update keywords for your project, these will be used when searching in the VS Code marketplace.
+    - `"categories"`: Update categories for your project, makes it easier to filter in the VS Code marketplace.
+    - `"homepage"`, `"repository"`, and `"bugs"` : Update URLs for these fields to point to your project.
+    - **Optional** Add `"icon"` field with relative path to a image file to use as icon for this project.
+1. Make sure to check the following markdown files:
+    - **REQUIRED** First time only: `CODE_OF_CONDUCT.md`, `LICENSE`, `SUPPORT.md`, `SECURITY.md`
+    - Every Release: `CHANGELOG.md`
+1. Build package using `nox --session build_package`.
+1. Take the generated `.vsix` file and upload it to your extension management page <https://marketplace.visualstudio.com/manage>.
 
-To do this from the command line see here https://code.visualstudio.com/api/working-with-extensions/publishing-extension
+To do this from the command line see here <https://code.visualstudio.com/api/working-with-extensions/publishing-extension>
 
 ## Upgrading Dependencies
 
@@ -129,15 +129,15 @@ To manually upgrade your local project:
 1. Run `npm update` to update node modules.
 1. Run `nox --session setup` to upgrade python packages.
 
-# Troubleshooting
+## Troubleshooting
 
-## Changing path or name of `server.py` something else.
+### Changing path or name of `server.py` something else
 
 If you want to change the name of `server.py` to something else, you can. Be sure to update `constants.ts` and `src\test\python_tests\lsp_test_client\session.py`.
 
 Also make sure that the inserted paths in `server.py` are pointing to the right folders to pick up the dependent packages.
 
-## Module not found errors.
+### Module not found errors
 
 This can occurs if `bundled/libs` is empty. That is the folder where we put your tool and other dependencies. Be sure to follow the build steps need for creating and bundling the required libs.
 
