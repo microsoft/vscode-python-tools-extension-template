@@ -4,9 +4,9 @@ This is a template repository to get you started on building a VS Code extension
 
 ## Programming Languages and Frameworks
 
-The extension template has two parts, the extension part and language server part. The extension part is written in TypeScript, and language server part is written in Python over the `pygls` (Python language server) library.
+The extension template has two parts, the extension part and language server part. The extension part is written in TypeScript, and language server part is written in Python over the [_pygls_][pygls] (Python language server) library.
 
-For the most part you will be working on the python part of the code when using this template. You will be integrating your tool with the extension part using the [Language Server Protocol](https://microsoft.github.io/language-server-protocol). `pygls` currently works on the [version 3.16 of LSP](https://microsoft.github.io/language-server-protocol/specifications/specification-3-16/).
+For the most part you will be working on the python part of the code when using this template. You will be integrating your tool with the extension part using the [Language Server Protocol](https://microsoft.github.io/language-server-protocol). [_pygls_][pygls] currently works on the [version 3.16 of LSP](https://microsoft.github.io/language-server-protocol/specifications/specification-3-16/).
 
 The TypeScript part handles working with VS Code and its UI. The extension template comes with few settings pre configured that can be used by your tool. If you need to add new settings to support your tool, you will have to work with a bit of TypeScript. The extension has examples for few settings that you can follow. You can also look at extensions developed by our team for some of the popular tools as reference.
 
@@ -141,8 +141,10 @@ Also make sure that the inserted paths in `server.py` are pointing to the right 
 
 This can occurs if `bundled/libs` is empty. That is the folder where we put your tool and other dependencies. Be sure to follow the build steps need for creating and bundling the required libs.
 
-Common one is `pygls` module not found.
+Common one is [_pygls_][pygls] module not found.
 
 # TODO: The maintainer of this repo has not yet edited this file
 
 **Repo Owner** Make sure you update this. As a repository owner you will need to update this file with specific instructions for your extension.
+
+[pygls]: https://github.com/openlawlibrary/pygls
