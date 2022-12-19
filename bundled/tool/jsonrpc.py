@@ -131,8 +131,8 @@ class ProcessManager:
         self._rpc: Dict[str, JsonRpc] = {}
         self._lock = threading.Lock()
         self._thread_pool = ThreadPoolExecutor(10)
+        atexit.register(self.stop_all_processes)
 
-    @atexit.register
     def stop_all_processes(self):
         """Send exit command to all processes and shutdown transport."""
         for i in self._rpc.values():
