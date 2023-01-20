@@ -269,13 +269,13 @@ def initialize(params: lsp.InitializeParams) -> None:
 
     if isinstance(LSP_SERVER.lsp, protocol.LanguageServerProtocol):
         if any(setting["logLevel"] == "debug" for setting in settings):
-            LSP_SERVER.lsp.trace = lsp.Trace.Verbose
+            LSP_SERVER.lsp.trace = lsp.TraceValues.Verbose
         elif any(
             setting["logLevel"] in ["error", "warn", "info"] for setting in settings
         ):
-            LSP_SERVER.lsp.trace = lsp.Trace.Messages
+            LSP_SERVER.lsp.trace = lsp.TraceValues.Messages
         else:
-            LSP_SERVER.lsp.trace = lsp.Trace.Off
+            LSP_SERVER.lsp.trace = lsp.TraceValues.Off
 
 
 @LSP_SERVER.feature(lsp.EXIT)
