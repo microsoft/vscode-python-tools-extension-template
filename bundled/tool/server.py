@@ -36,14 +36,16 @@ update_sys_path(
 # **********************************************************
 # pylint: disable=wrong-import-position,import-error
 import jsonrpc
+import lsprotocol.types as lsp
 import utils
-from pygls import lsp, protocol, server, uris, workspace
+from pygls import protocol, server, uris, workspace
 
 WORKSPACE_SETTINGS = {}
 RUNNER = pathlib.Path(__file__).parent / "runner.py"
 
 MAX_WORKERS = 5
-LSP_SERVER = server.LanguageServer(max_workers=MAX_WORKERS)
+# TODO: Update the language server name and version.
+LSP_SERVER = server.LanguageServer(name="<pytool-display-name>", version="<server version>", max_workers=MAX_WORKERS)
 
 
 # **********************************************************
