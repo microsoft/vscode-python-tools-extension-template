@@ -36,14 +36,16 @@ update_sys_path(
 # **********************************************************
 # pylint: disable=wrong-import-position,import-error
 import jsonrpc
+import lsprotocol.types as lsp
 import utils
-from pygls import lsp, protocol, server, uris, workspace
+from pygls import protocol, server, uris, workspace
 
 WORKSPACE_SETTINGS = {}
 RUNNER = pathlib.Path(__file__).parent / "runner.py"
 
 MAX_WORKERS = 5
-LSP_SERVER = server.LanguageServer(max_workers=MAX_WORKERS)
+# TODO: Update the language server name and version.
+LSP_SERVER = server.LanguageServer(name="<pytool-display-name>", version="<server version>", max_workers=MAX_WORKERS)
 
 
 # **********************************************************
@@ -267,13 +269,13 @@ def initialize(params: lsp.InitializeParams) -> None:
 
     if isinstance(LSP_SERVER.lsp, protocol.LanguageServerProtocol):
         if any(setting["logLevel"] == "debug" for setting in settings):
-            LSP_SERVER.lsp.trace = lsp.Trace.Verbose
+            LSP_SERVER.lsp.trace = lsp.TraceValues.Verbose
         elif any(
             setting["logLevel"] in ["error", "warn", "info"] for setting in settings
         ):
-            LSP_SERVER.lsp.trace = lsp.Trace.Messages
+            LSP_SERVER.lsp.trace = lsp.TraceValues.Messages
         else:
-            LSP_SERVER.lsp.trace = lsp.Trace.Off
+            LSP_SERVER.lsp.trace = lsp.TraceValues.Off
 
 
 @LSP_SERVER.feature(lsp.EXIT)
