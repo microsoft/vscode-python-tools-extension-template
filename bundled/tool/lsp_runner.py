@@ -30,8 +30,8 @@ update_sys_path(
 
 
 # pylint: disable=wrong-import-position,import-error
-import jsonrpc
-import utils
+import lsp_jsonrpc as jsonrpc
+import lsp_utils as utils
 
 RPC = jsonrpc.create_json_rpc(sys.stdin.buffer, sys.stdout.buffer)
 
@@ -55,7 +55,7 @@ while not EXIT_NOW:
                 # If your tool supports a programmatic API then replace the function below
                 # with code for your tool. You can also use `utils.run_api` helper, which
                 # handles changing working directories, managing io streams, etc.
-                # Also update `_run_tool_on_document` and `_run_tool` functions in `server.py`.
+                # Also update `_run_tool_on_document` and `_run_tool` functions in `lsp_server.py`.
                 result = utils.run_module(
                     module=msg["module"],
                     argv=msg["argv"],

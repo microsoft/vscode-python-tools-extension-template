@@ -35,13 +35,13 @@ update_sys_path(
 # Imports needed for the language server goes below this.
 # **********************************************************
 # pylint: disable=wrong-import-position,import-error
-import jsonrpc
+import lsp_jsonrpc as jsonrpc
 import lsprotocol.types as lsp
-import utils
+import lsp_utils as utils
 from pygls import protocol, server, uris, workspace
 
 WORKSPACE_SETTINGS = {}
-RUNNER = pathlib.Path(__file__).parent / "runner.py"
+RUNNER = pathlib.Path(__file__).parent / "lsp_runner.py"
 
 MAX_WORKERS = 5
 # TODO: Update the language server name and version.
@@ -420,7 +420,7 @@ def _run_tool_on_document(
                 # If your tool supports a programmatic API then replace the function below
                 # with code for your tool. You can also use `utils.run_api` helper, which
                 # handles changing working directories, managing io streams, etc.
-                # Also update `_run_tool` function and `utils.run_module` in `runner.py`.
+                # Also update `_run_tool` function and `utils.run_module` in `lsp_runner.py`.
                 result = utils.run_module(
                     module=TOOL_MODULE,
                     argv=argv,
@@ -503,7 +503,7 @@ def _run_tool(extra_args: Sequence[str]) -> utils.RunResult:
                 # If your tool supports a programmatic API then replace the function below
                 # with code for your tool. You can also use `utils.run_api` helper, which
                 # handles changing working directories, managing io streams, etc.
-                # Also update `_run_tool_on_document` function and `utils.run_module` in `runner.py`.
+                # Also update `_run_tool_on_document` function and `utils.run_module` in `lsp_runner.py`.
                 result = utils.run_module(
                     module=TOOL_MODULE, argv=argv, use_stdin=True, cwd=cwd
                 )
