@@ -12,9 +12,6 @@
             "args": ["--extensionDevelopmentPath=${workspaceFolder}"],
             "outFiles": ["${workspaceFolder}/dist/**/*.js"],
             "preLaunchTask": "npm: watch",
-            "env": {
-                "DEBUGPY_ENABLED": "False"
-            },
             "presentation": {
                 "hidden": false,
                 "group": "",
@@ -34,7 +31,7 @@
             }
         },
         {
-            "name": "Python Test Debug",
+            "name": "Python Config for test explorer (hidden)",
             "type": "python",
             "request": "launch",
             "console": "integratedTerminal",
@@ -47,11 +44,14 @@
             }
         },
         {
-            "name": "Debug Extension",
+            "name": "Debug Extension (hidden)",
             "type": "extensionHost",
             "request": "launch",
             "args": ["--extensionDevelopmentPath=${workspaceFolder}"],
             "outFiles": ["${workspaceFolder}/dist/**/*.js"],
+            "env": {
+                "USE_DEBUGPY": "True"
+            },
             "presentation": {
                 "hidden": true,
                 "group": "",
@@ -59,7 +59,7 @@
             }
         },
         {
-            "name": "Python Server",
+            "name": "Python debug server (hidden)",
             "type": "python",
             "request": "attach",
             "listen": { "host": "localhost", "port": 5678 },
@@ -74,7 +74,7 @@
     "compounds": [
         {
             "name": "Debug Extension and Python",
-            "configurations": ["Python Server", "Debug Extension"],
+            "configurations": ["Python debug server (hidden)", "Debug Extension (hidden)"],
             "stopAll": true,
             "preLaunchTask": "npm: watch",
             "presentation": {
