@@ -118,11 +118,16 @@ export async function restartServer(
                     break;
             }
         }),
-        newLSClient.start(),
         outputChannel.onDidChangeLogLevel((e) => {
-            newLSClient.trace = getLSClientTraceLevel(e);
+            newLSClient.setTrace(getLSClientTraceLevel(e));
         }),
     );
-    newLSClient.trace = getLSClientTraceLevel(outputChannel.logLevel);
+    try {
+        await newLSClient.start();
+    } catch (ex) {
+        traceError(`Server: Start failed: ${ex}`);
+        return undefined;
+    }
+    newLSClient.setTrace(getLSClientTraceLevel(outputChannel.logLevel));
     return newLSClient;
 }
