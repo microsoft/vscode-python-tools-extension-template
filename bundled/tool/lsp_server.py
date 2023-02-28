@@ -11,7 +11,7 @@ import re
 import sys
 import sysconfig
 import traceback
-from typing import Sequence, Optional, Any
+from typing import Any, Optional, Sequence
 
 
 # **********************************************************
@@ -37,8 +37,8 @@ update_sys_path(
 # **********************************************************
 # pylint: disable=wrong-import-position,import-error
 import lsp_jsonrpc as jsonrpc
-import lsprotocol.types as lsp
 import lsp_utils as utils
+import lsprotocol.types as lsp
 from pygls import server, uris, workspace
 
 WORKSPACE_SETTINGS = {}
@@ -47,7 +47,9 @@ RUNNER = pathlib.Path(__file__).parent / "lsp_runner.py"
 
 MAX_WORKERS = 5
 # TODO: Update the language server name and version.
-LSP_SERVER = server.LanguageServer(name="<pytool-display-name>", version="<server version>", max_workers=MAX_WORKERS)
+LSP_SERVER = server.LanguageServer(
+    name="<pytool-display-name>", version="<server version>", max_workers=MAX_WORKERS
+)
 
 
 # **********************************************************

@@ -99,16 +99,10 @@ export async function restartServer(
         return undefined;
     }
 
-    const newLSClient = await createServer(
-        workspaceSetting,
-        serverId,
-        serverName,
-        outputChannel,
-        {
-            settings: await getExtensionSettings(serverId, true),
-            globalSettings: await getGlobalSettings(serverId, false),
-        },
-    );
+    const newLSClient = await createServer(workspaceSetting, serverId, serverName, outputChannel, {
+        settings: await getExtensionSettings(serverId, true),
+        globalSettings: await getGlobalSettings(serverId, false),
+    });
     traceInfo(`Server: Start requested.`);
     _disposables.push(
         newLSClient.onDidChangeState((e) => {
