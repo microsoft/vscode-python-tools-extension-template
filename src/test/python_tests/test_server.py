@@ -102,8 +102,8 @@ def test_formatting_example():
     lines = contents.splitlines(keepends=False)
 
     actual = []
-    with utils.python_file(contents, UNFORMATTED_TEST_FILE_PATH.parent) as pf:
-        uri = utils.as_uri(str(pf))
+    with utils.PythonFile(contents, UNFORMATTED_TEST_FILE_PATH.parent) as pf:
+        uri = utils.as_uri(str(pf.fullpath))
 
         with session.LspSession() as ls_session:
             ls_session.initialize()

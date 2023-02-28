@@ -40,7 +40,6 @@ After finishing the getting started part, this template would have added the fol
 
 1. A command `My Tool: Restart Server` (command Id: `mytool.restart`).
 1. Following setting:
-    - `mytool.logLevel`
     - `mytool.args`
     - `mytool.path`
     - `mytool.importStrategy`
@@ -54,11 +53,11 @@ After finishing the getting started part, this template would have added the fol
 
 ## Adding features from your tool
 
-Open `bundled/tool/server.py`, here is where you will do most of the changes. Look for `TODO` comments there for more details.
+Open `bundled/tool/lsp_server.py`, here is where you will do most of the changes. Look for `TODO` comments there for more details.
 
 Also look for `TODO` in other locations in the entire template:
 
-- `bundled/tool/runner.py` : You may need to update this in some special cases.
+- `bundled/tool/lsp_runner.py` : You may need to update this in some special cases.
 - `src/test/python_tests/test_server.py` : This is where you will write tests. There are two incomplete examples provided there to get you started.
 - All the markdown files in this template have some `TODO` items, be sure to check them out as well. That includes updating the LICENSE file, even if you want to keep it MIT License.
 
@@ -81,11 +80,11 @@ To debug both TypeScript and Python code use `Debug Extension and Python` debug 
 
 To debug only TypeScript code, use `Debug Extension` debug config.
 
-To debug a already running server or in production server, use `Python Attach`, and select the process that is running `server.py`.
+To debug a already running server or in production server, use `Python Attach`, and select the process that is running `lsp_server.py`.
 
 ## Adding new Settings or Commands
 
-You can add new settings by adding details for the settings in `package.json` file. To pass this configuration to your python tool server (i.e, `server.py`) update the `settings.ts` as need. There are examples of different types of settings in that file that you can base your new settings on.
+You can add new settings by adding details for the settings in `package.json` file. To pass this configuration to your python tool server (i.e, `lsp_server.py`) update the `settings.ts` as need. There are examples of different types of settings in that file that you can base your new settings on.
 
 You can follow how `restart` command is implemented in `package.json` and `extension.ts` for how to add commands. You cam also contribute commands from Python via the Language Server Protocol.
 
@@ -131,11 +130,11 @@ To manually upgrade your local project:
 
 ## Troubleshooting
 
-### Changing path or name of `server.py` something else
+### Changing path or name of `lsp_server.py` something else
 
-If you want to change the name of `server.py` to something else, you can. Be sure to update `constants.ts` and `src\test\python_tests\lsp_test_client\session.py`.
+If you want to change the name of `lsp_server.py` to something else, you can. Be sure to update `constants.ts` and `src\test\python_tests\lsp_test_client\session.py`.
 
-Also make sure that the inserted paths in `server.py` are pointing to the right folders to pick up the dependent packages.
+Also make sure that the inserted paths in `lsp_server.py` are pointing to the right folders to pick up the dependent packages.
 
 ### Module not found errors
 

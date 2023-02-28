@@ -9,8 +9,9 @@ import os
 import pathlib
 import re
 import sys
+import sysconfig
 import traceback
-from typing import Sequence
+from typing import Any, Optional, Sequence
 
 
 # **********************************************************
@@ -35,17 +36,20 @@ update_sys_path(
 # Imports needed for the language server goes below this.
 # **********************************************************
 # pylint: disable=wrong-import-position,import-error
-import jsonrpc
+import lsp_jsonrpc as jsonrpc
+import lsp_utils as utils
 import lsprotocol.types as lsp
-import utils
-from pygls import protocol, server, uris, workspace
+from pygls import server, uris, workspace
 
 WORKSPACE_SETTINGS = {}
-RUNNER = pathlib.Path(__file__).parent / "runner.py"
+GLOBAL_SETTINGS = {}
+RUNNER = pathlib.Path(__file__).parent / "lsp_runner.py"
 
 MAX_WORKERS = 5
 # TODO: Update the language server name and version.
-LSP_SERVER = server.LanguageServer(name="<pytool-display-name>", version="<server version>", max_workers=MAX_WORKERS)
+LSP_SERVER = server.LanguageServer(
+    name="<pytool-display-name>", version="<server version>", max_workers=MAX_WORKERS
+)
 
 
 # **********************************************************
@@ -189,7 +193,7 @@ def _get_severity(*_codes: list[str]) -> lsp.DiagnosticSeverity:
 #  Black: https://github.com/microsoft/vscode-black-formatter/blob/main/bundled/tool
 
 
-@LSP_SERVER.feature(lsp.FORMATTING)
+@LSP_SERVER.feature(lsp.TEXT_DOCUMENT_FORMATTING)
 def formatting(params: lsp.DocumentFormattingParams) -> list[lsp.TextEdit] | None:
     """LSP handler for textDocument/formatting request."""
     # If your tool is a formatter you can use this handler to provide
@@ -261,33 +265,51 @@ def initialize(params: lsp.InitializeParams) -> None:
     paths = "\r\n   ".join(sys.path)
     log_to_output(f"sys.path used to run Server:\r\n   {paths}")
 
+    GLOBAL_SETTINGS.update(**params.initialization_options.get("globalSettings", {}))
+
     settings = params.initialization_options["settings"]
     _update_workspace_settings(settings)
     log_to_output(
         f"Settings used to run Server:\r\n{json.dumps(settings, indent=4, ensure_ascii=False)}\r\n"
     )
-
-    if isinstance(LSP_SERVER.lsp, protocol.LanguageServerProtocol):
-        if any(setting["logLevel"] == "debug" for setting in settings):
-            LSP_SERVER.lsp.trace = lsp.TraceValues.Verbose
-        elif any(
-            setting["logLevel"] in ["error", "warn", "info"] for setting in settings
-        ):
-            LSP_SERVER.lsp.trace = lsp.TraceValues.Messages
-        else:
-            LSP_SERVER.lsp.trace = lsp.TraceValues.Off
+    log_to_output(
+        f"Global settings:\r\n{json.dumps(GLOBAL_SETTINGS, indent=4, ensure_ascii=False)}\r\n"
+    )
 
 
 @LSP_SERVER.feature(lsp.EXIT)
-def on_exit():
+def on_exit(_params: Optional[Any] = None) -> None:
     """Handle clean up on exit."""
     jsonrpc.shutdown_json_rpc()
 
 
-# *****************************************************
-# Internal functional and settings management APIs.
-# *****************************************************
+@LSP_SERVER.feature(lsp.SHUTDOWN)
+def on_shutdown(_params: Optional[Any] = None) -> None:
+    """Handle clean up on shutdown."""
+    jsonrpc.shutdown_json_rpc()
+
+
+def _get_global_defaults():
+    return {
+        "path": GLOBAL_SETTINGS.get("path", []),
+        "interpreter": GLOBAL_SETTINGS.get("interpreter", [sys.executable]),
+        "args": GLOBAL_SETTINGS.get("args", []),
+        "importStrategy": GLOBAL_SETTINGS.get("importStrategy", "useBundled"),
+        "showNotifications": GLOBAL_SETTINGS.get("showNotifications", "off"),
+    }
+
+
 def _update_workspace_settings(settings):
+    if not settings:
+        key = os.getcwd()
+        WORKSPACE_SETTINGS[key] = {
+            "cwd": key,
+            "workspaceFS": key,
+            "workspace": uris.from_fs_path(key),
+            **_get_global_defaults(),
+        }
+        return
+
     for setting in settings:
         key = uris.to_fs_path(setting["workspace"])
         WORKSPACE_SETTINGS[key] = {
@@ -296,20 +318,49 @@ def _update_workspace_settings(settings):
         }
 
 
-def _get_settings_by_document(document: workspace.Document | None):
-    if len(WORKSPACE_SETTINGS) == 1 or document is None or document.path is None:
-        return list(WORKSPACE_SETTINGS.values())[0]
-
-    document_workspace = pathlib.Path(document.path)
+def _get_settings_by_path(file_path: pathlib.Path):
     workspaces = {s["workspaceFS"] for s in WORKSPACE_SETTINGS.values()}
 
-    # COMMENT: about non workspace files
-    while document_workspace != document_workspace.parent:
-        if str(document_workspace) in workspaces:
-            return WORKSPACE_SETTINGS[str(document_workspace)]
-        document_workspace = document_workspace.parent
+    while file_path != file_path.parent:
+        str_file_path = str(file_path)
+        if str_file_path in workspaces:
+            return WORKSPACE_SETTINGS[str_file_path]
+        file_path = file_path.parent
 
-    return list(WORKSPACE_SETTINGS.values())[0]
+    setting_values = list(WORKSPACE_SETTINGS.values())
+    return setting_values[0]
+
+
+def _get_document_key(document: workspace.Document):
+    if WORKSPACE_SETTINGS:
+        document_workspace = pathlib.Path(document.path)
+        workspaces = {s["workspaceFS"] for s in WORKSPACE_SETTINGS.values()}
+
+        # Find workspace settings for the given file.
+        while document_workspace != document_workspace.parent:
+            if str(document_workspace) in workspaces:
+                return str(document_workspace)
+            document_workspace = document_workspace.parent
+
+    return None
+
+
+def _get_settings_by_document(document: workspace.Document | None):
+    if document is None or document.path is None:
+        return list(WORKSPACE_SETTINGS.values())[0]
+
+    key = _get_document_key(document)
+    if key is None:
+        # This is either a non-workspace file or there is no workspace.
+        key = os.fspath(pathlib.Path(document.path).parent)
+        return {
+            "cwd": key,
+            "workspaceFS": key,
+            "workspace": uris.from_fs_path(key),
+            **_get_global_defaults(),
+        }
+
+    return WORKSPACE_SETTINGS[str(key)]
 
 
 # *****************************************************
@@ -339,7 +390,7 @@ def _run_tool_on_document(
     settings = copy.deepcopy(_get_settings_by_document(document))
 
     code_workspace = settings["workspaceFS"]
-    cwd = settings["workspaceFS"]
+    cwd = settings["cwd"]
 
     use_path = False
     use_rpc = False
@@ -420,7 +471,7 @@ def _run_tool_on_document(
                 # If your tool supports a programmatic API then replace the function below
                 # with code for your tool. You can also use `utils.run_api` helper, which
                 # handles changing working directories, managing io streams, etc.
-                # Also update `_run_tool` function and `utils.run_module` in `runner.py`.
+                # Also update `_run_tool` function and `utils.run_module` in `lsp_runner.py`.
                 result = utils.run_module(
                     module=TOOL_MODULE,
                     argv=argv,
@@ -503,7 +554,7 @@ def _run_tool(extra_args: Sequence[str]) -> utils.RunResult:
                 # If your tool supports a programmatic API then replace the function below
                 # with code for your tool. You can also use `utils.run_api` helper, which
                 # handles changing working directories, managing io streams, etc.
-                # Also update `_run_tool_on_document` function and `utils.run_module` in `runner.py`.
+                # Also update `_run_tool_on_document` function and `utils.run_module` in `lsp_runner.py`.
                 result = utils.run_module(
                     module=TOOL_MODULE, argv=argv, use_stdin=True, cwd=cwd
                 )
