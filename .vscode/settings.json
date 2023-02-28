@@ -14,5 +14,9 @@
     "python.testing.unittestEnabled": false,
     "python.testing.pytestEnabled": true,
     "python.testing.cwd": "${workspaceFolder}",
-    "python.analysis.extraPaths": ["bundled/libs"]
+    "python.analysis.extraPaths": ["bundled/libs"],
+    "[typescript]": {
+        "editor.defaultFormatter": "esbenp.prettier-vscode",
+        "editor.formatOnSave": true
+    },
 }
