@@ -189,7 +189,7 @@ def _get_severity(*_codes: list[str]) -> lsp.DiagnosticSeverity:
 #  Black: https://github.com/microsoft/vscode-black-formatter/blob/main/bundled/tool
 
 
-@LSP_SERVER.feature(lsp.FORMATTING)
+@LSP_SERVER.feature(lsp.TEXT_DOCUMENT_FORMATTING)
 def formatting(params: lsp.DocumentFormattingParams) -> list[lsp.TextEdit] | None:
     """LSP handler for textDocument/formatting request."""
     # If your tool is a formatter you can use this handler to provide
