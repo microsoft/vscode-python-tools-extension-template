@@ -131,7 +131,6 @@ class ProcessManager:
         self._rpc: Dict[str, JsonRpc] = {}
         self._lock = threading.Lock()
         self._thread_pool = ThreadPoolExecutor(10)
-        atexit.register(self.stop_all_processes)
 
     def stop_all_processes(self):
         """Send exit command to all processes and shutdown transport."""
@@ -175,6 +174,7 @@ class ProcessManager:
 
 
 _process_manager = ProcessManager()
+atexit.register(_process_manager.stop_all_processes)
 
 
 def _get_json_rpc(workspace: str) -> Union[JsonRpc, None]:
@@ -244,11 +244,14 @@ def run_over_json_rpc(
         )
 
     if "error" in data:
-        if data.get("exception", False):
-            return RpcRunResult(data["result"], "", data["error"])
-        return RpcRunResult(data["result"], data["error"])
+        result = data["result"] if "result" in data else ""
+        error = data["error"]
 
-    return RpcRunResult(data["result"], "")
+        if data.get("exception", False):
+            return RpcRunResult(result, "", error)
+        return RpcRunResult(result, error)
+
+    return RpcRunResult(result, "")
 
 
 def shutdown_json_rpc():

@@ -40,7 +40,6 @@ After finishing the getting started part, this template would have added the fol
 
 1. A command `My Tool: Restart Server` (command Id: `mytool.restart`).
 1. Following setting:
-    - `mytool.logLevel`
     - `mytool.args`
     - `mytool.path`
     - `mytool.importStrategy`

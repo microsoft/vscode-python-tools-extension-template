@@ -7,7 +7,7 @@ import {
     commands,
     ConfigurationScope,
     Disposable,
-    OutputChannel,
+    LogOutputChannel,
     Uri,
     window,
     workspace,
@@ -15,8 +15,8 @@ import {
     WorkspaceFolder,
 } from 'vscode';
 
-export function createOutputChannel(name: string): OutputChannel {
-    return window.createOutputChannel(name);
+export function createOutputChannel(name: string): LogOutputChannel {
+    return window.createOutputChannel(name, { log: true });
 }
 
 export function getConfiguration(config: string, scope?: ConfigurationScope): WorkspaceConfiguration {
