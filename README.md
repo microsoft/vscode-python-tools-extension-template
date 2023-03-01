@@ -48,7 +48,8 @@ After finishing the getting started part, this template would have added the fol
 1. Following triggers for extension activation:
     - On Language `python`.
     - On File with `.py` extension found in the opened workspace.
-    - On Command `mytool.restart`.
+1. Following commands are registered:
+    - `mytool.restart`: Restarts the language server.
 1. Output Channel for logging `Output` > `My Tool`
 
 ## Adding features from your tool
@@ -81,6 +82,12 @@ To debug both TypeScript and Python code use `Debug Extension and Python` debug 
 To debug only TypeScript code, use `Debug Extension` debug config.
 
 To debug a already running server or in production server, use `Python Attach`, and select the process that is running `lsp_server.py`.
+
+## Logging and Logs
+
+The template creates a logging Output channel that can be found under `Output` > `mytool` panel. You can control the log level running the `Developer: Set Log Level...` command from the Command Pallet, and selecting your extension from the list. It should be listed using the display name for your tool. You can also set the global log level, and that will apply to all extensions and the editor.
+
+If you need logs that involve messages between the Language Client and Language Server, you can set `"mytool.server.trace": "verbose"`, to get the messaging logs. These logs are also available `Output` > `mytool` panel.
 
 ## Adding new Settings or Commands
 

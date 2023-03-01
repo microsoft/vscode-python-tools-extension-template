@@ -9,7 +9,7 @@ class OutputChannelLogger {
     constructor(private readonly channel: LogOutputChannel) {}
 
     public traceLog(...data: Arguments): void {
-        this.channel.trace(util.format(...data));
+        this.channel.appendLine(util.format(...data));
     }
 
     public traceError(...data: Arguments): void {

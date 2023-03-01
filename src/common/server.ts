@@ -2,7 +2,7 @@
 // Licensed under the MIT License.
 
 import * as fsapi from 'fs-extra';
-import { Disposable, LogOutputChannel } from 'vscode';
+import { Disposable, env, LogOutputChannel } from 'vscode';
 import { State } from 'vscode-languageclient';
 import {
     LanguageClient,
@@ -112,9 +112,6 @@ export async function restartServer(
                     break;
             }
         }),
-        outputChannel.onDidChangeLogLevel((e) => {
-            newLSClient.setTrace(getLSClientTraceLevel(e));
-        }),
     );
     try {
         await newLSClient.start();
@@ -122,6 +119,8 @@ export async function restartServer(
         traceError(`Server: Start failed: ${ex}`);
         return undefined;
     }
-    newLSClient.setTrace(getLSClientTraceLevel(outputChannel.logLevel));
+
+    const level = getLSClientTraceLevel(outputChannel.logLevel, env.logLevel);
+    await newLSClient.setTrace(level);
     return newLSClient;
 }
