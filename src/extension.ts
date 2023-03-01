@@ -3,11 +3,13 @@
 
 import * as vscode from 'vscode';
 import { LanguageClient } from 'vscode-languageclient/node';
-import { registerLogger, traceLog, traceVerbose } from './common/log/logging';
+import { registerLogger, traceError, traceLog, traceVerbose } from './common/log/logging';
 import {
+    checkVersion,
     getInterpreterDetails,
     initializePython,
     onDidChangePythonInterpreter,
+    resolveInterpreter,
     runPythonExtensionCommand,
 } from './common/python';
 import { restartServer } from './common/server';
@@ -33,7 +35,24 @@ export async function activate(context: vscode.ExtensionContext): Promise<void> 
     traceVerbose(`Configuration: ${JSON.stringify(serverInfo)}`);
 
     const runServer = async () => {
-        lsClient = await restartServer(serverId, serverName, outputChannel, lsClient);
+        const interpreter = getInterpreterFromSetting(serverId);
+        if (interpreter && interpreter.length > 0 && checkVersion(await resolveInterpreter(interpreter))) {
+            lsClient = await restartServer(serverId, serverName, outputChannel, lsClient);
+            return;
+        }
+
+        const interpreterDetails = await getInterpreterDetails();
+        if (interpreterDetails.path) {
+            lsClient = await restartServer(serverId, serverName, outputChannel, lsClient);
+            return;
+        }
+
+        traceError(
+            'Python interpreter missing:\r\n' +
+                '[Option 1] Select python interpreter using the ms-python.python.\r\n' +
+                `[Option 2] Set an interpreter using "${serverId}.interpreter" setting.\r\n` +
+                'Please use Python 3.7 or greater.',
+        );
     };
 
     context.subscriptions.push(
@@ -44,14 +63,7 @@ export async function activate(context: vscode.ExtensionContext): Promise<void> 
 
     context.subscriptions.push(
         registerCommand(`${serverId}.restart`, async () => {
-            const interpreter = getInterpreterFromSetting(serverId);
-            const interpreterDetails = await getInterpreterDetails();
-            if (interpreter?.length || interpreterDetails.path) {
-                await runServer();
-            } else {
-                const projectRoot = await getProjectRoot();
-                runPythonExtensionCommand('python.triggerEnvSelection', projectRoot.uri);
-            }
+            await runServer();
         }),
     );
 
