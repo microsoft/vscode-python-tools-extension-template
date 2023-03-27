@@ -21,3 +21,4 @@ noxfile.py
 .pylintrc
 **/requirements.txt
 **/requirements.in
+**/tool/_debug_server.py
