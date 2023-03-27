@@ -3,36 +3,22 @@
 
 import * as fs from 'fs-extra';
 import * as path from 'path';
-import { LogLevel, Uri, WorkspaceFolder } from 'vscode';
-import { Trace } from 'vscode-jsonrpc/node';
+import { env, LogLevel, Uri, WorkspaceFolder } from 'vscode';
+import { Trace, TraceValues } from 'vscode-jsonrpc/node';
 import { getWorkspaceFolders } from './vscodeapi';
 
-function logLevelToTrace(logLevel: LogLevel): Trace {
+export function getLSClientTraceLevel(logLevel: LogLevel): Trace {
     switch (logLevel) {
         case LogLevel.Error:
         case LogLevel.Warning:
         case LogLevel.Info:
             return Trace.Messages;
-
         case LogLevel.Debug:
-        case LogLevel.Trace:
             return Trace.Verbose;
-
         case LogLevel.Off:
         default:
             return Trace.Off;
     }
-}
-
-export function getLSClientTraceLevel(channelLogLevel: LogLevel, globalLogLevel: LogLevel): Trace {
-    if (channelLogLevel === LogLevel.Off) {
-        return logLevelToTrace(globalLogLevel);
-    }
-    if (globalLogLevel === LogLevel.Off) {
-        return logLevelToTrace(channelLogLevel);
-    }
-    const level = logLevelToTrace(channelLogLevel <= globalLogLevel ? channelLogLevel : globalLogLevel);
-    return level;
 }
 
 export async function getProjectRoot(): Promise<WorkspaceFolder> {

@@ -1,8 +1,7 @@
 // Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT License.
 
-import * as fsapi from 'fs-extra';
-import { Disposable, env, LogOutputChannel } from 'vscode';
+import { Disposable, LogOutputChannel, WorkspaceFolder } from 'vscode';
 import { State } from 'vscode-languageclient';
 import {
     LanguageClient,
@@ -32,7 +31,6 @@ async function createServer(
     // Set debugger path needed for debugging python code.
     const newEnv = { ...process.env };
     const debuggerPath = await getDebuggerPath();
-    const isDebugScript = await fsapi.pathExists(DEBUG_SERVER_SCRIPT_PATH);
     if (newEnv.USE_DEBUGPY && debuggerPath) {
         newEnv.DEBUGPY_PATH = debuggerPath;
     } else {
@@ -46,7 +44,7 @@ async function createServer(
     newEnv.LS_SHOW_NOTIFICATION = settings.showNotifications;
 
     const args =
-        newEnv.USE_DEBUGPY === 'False' || !isDebugScript
+        newEnv.USE_DEBUGPY === 'False'
             ? settings.interpreter.slice(1).concat([SERVER_SCRIPT_PATH])
             : settings.interpreter.slice(1).concat([DEBUG_SERVER_SCRIPT_PATH]);
     traceInfo(`Server run command: ${[command, ...args].join(' ')}`);
@@ -92,6 +90,14 @@ export async function restartServer(
     }
     const projectRoot = await getProjectRoot();
     const workspaceSetting = await getWorkspaceSettings(serverId, projectRoot, true);
+    if (workspaceSetting.interpreter.length === 0) {
+        traceError(
+            'Python interpreter missing:\r\n' +
+                '[Option 1] Select python interpreter using the ms-python.python.\r\n' +
+                `[Option 2] Set an interpreter using "${serverId}.interpreter" setting.\r\n`,
+        );
+        return undefined;
+    }
 
     const newLSClient = await createServer(workspaceSetting, serverId, serverName, outputChannel, {
         settings: await getExtensionSettings(serverId, true),
@@ -112,6 +118,9 @@ export async function restartServer(
                     break;
             }
         }),
+        outputChannel.onDidChangeLogLevel((e) => {
+            newLSClient.setTrace(getLSClientTraceLevel(e));
+        }),
     );
     try {
         await newLSClient.start();
@@ -119,8 +128,6 @@ export async function restartServer(
         traceError(`Server: Start failed: ${ex}`);
         return undefined;
     }
-
-    const level = getLSClientTraceLevel(outputChannel.logLevel, env.logLevel);
-    await newLSClient.setTrace(level);
+    newLSClient.setTrace(getLSClientTraceLevel(outputChannel.logLevel));
     return newLSClient;
 }
