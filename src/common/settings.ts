@@ -1,7 +1,7 @@
 // Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT License.
 
-import { ConfigurationChangeEvent, WorkspaceConfiguration, WorkspaceFolder } from 'vscode';
+import { ConfigurationChangeEvent, ConfigurationScope, WorkspaceConfiguration, WorkspaceFolder } from 'vscode';
 import { getInterpreterDetails } from './python';
 import { getConfiguration, getWorkspaceFolders } from './vscodeapi';
 
@@ -15,20 +15,34 @@ export interface ISettings {
     showNotifications: string;
 }
 
-export async function getExtensionSettings(namespace: string, includeInterpreter?: boolean): Promise<ISettings[]> {
-    const settings: ISettings[] = [];
-    const workspaces = getWorkspaceFolders();
-
-    for (const workspace of workspaces) {
-        const workspaceSetting = await getWorkspaceSettings(namespace, workspace, includeInterpreter);
-        settings.push(workspaceSetting);
-    }
-
-    return settings;
+export function getExtensionSettings(namespace: string, includeInterpreter?: boolean): Promise<ISettings[]> {
+    return Promise.all(getWorkspaceFolders().map((w) => getWorkspaceSettings(namespace, w, includeInterpreter)));
 }
 
-export function getInterpreterFromSetting(namespace: string) {
-    const config = getConfiguration(namespace);
+function resolveVariables(value: string[], workspace?: WorkspaceFolder): string[] {
+    const substitutions = new Map<string, string>();
+    const home = process.env.HOME || process.env.USERPROFILE;
+    if (home) {
+        substitutions.set('${userHome}', home);
+    }
+    if (workspace) {
+        substitutions.set('${workspaceFolder}', workspace.uri.fsPath);
+    }
+    substitutions.set('${cwd}', process.cwd());
+    getWorkspaceFolders().forEach((w) => {
+        substitutions.set('${workspaceFolder:' + w.name + '}', w.uri.fsPath);
+    });
+
+    return value.map((s) => {
+        for (const [key, value] of substitutions) {
+            s = s.replace(key, value);
+        }
+        return s;
+    });
+}
+
+export function getInterpreterFromSetting(namespace: string, scope?: ConfigurationScope) {
+    const config = getConfiguration(namespace, scope);
     return config.get<string[]>('interpreter');
 }
 
@@ -39,20 +53,20 @@ export async function getWorkspaceSettings(
 ): Promise<ISettings> {
     const config = getConfiguration(namespace, workspace.uri);
 
-    let interpreter: string[] | undefined = [];
+    let interpreter: string[] = [];
     if (includeInterpreter) {
-        interpreter = getInterpreterFromSetting(namespace);
-        if (interpreter === undefined || interpreter.length === 0) {
-            interpreter = (await getInterpreterDetails(workspace.uri)).path;
+        interpreter = getInterpreterFromSetting(namespace, workspace) ?? [];
+        if (interpreter.length === 0) {
+            interpreter = (await getInterpreterDetails(workspace.uri)).path ?? [];
         }
     }
 
     const workspaceSetting = {
         cwd: workspace.uri.fsPath,
         workspace: workspace.uri.toString(),
-        args: config.get<string[]>(`args`) ?? [],
-        path: config.get<string[]>(`path`) ?? [],
-        interpreter: interpreter ?? [],
+        args: resolveVariables(config.get<string[]>(`args`) ?? [], workspace),
+        path: resolveVariables(config.get<string[]>(`path`) ?? [], workspace),
+        interpreter: resolveVariables(interpreter, workspace),
         importStrategy: config.get<string>(`importStrategy`) ?? 'fromEnvironment',
         showNotifications: config.get<string>(`showNotifications`) ?? 'off',
     };
@@ -67,11 +81,11 @@ function getGlobalValue<T>(config: WorkspaceConfiguration, key: string, defaultV
 export async function getGlobalSettings(namespace: string, includeInterpreter?: boolean): Promise<ISettings> {
     const config = getConfiguration(namespace);
 
-    let interpreter: string[] | undefined = [];
+    let interpreter: string[] = [];
     if (includeInterpreter) {
         interpreter = getGlobalValue<string[]>(config, 'interpreter', []);
         if (interpreter === undefined || interpreter.length === 0) {
-            interpreter = (await getInterpreterDetails()).path;
+            interpreter = (await getInterpreterDetails()).path ?? [];
         }
     }
 
@@ -80,7 +94,7 @@ export async function getGlobalSettings(namespace: string, includeInterpreter?: 
         workspace: process.cwd(),
         args: getGlobalValue<string[]>(config, 'args', []),
         path: getGlobalValue<string[]>(config, 'path', []),
-        interpreter: interpreter ?? [],
+        interpreter: interpreter,
         importStrategy: getGlobalValue<string>(config, 'importStrategy', 'fromEnvironment'),
         showNotifications: getGlobalValue<string>(config, 'showNotifications', 'off'),
     };
