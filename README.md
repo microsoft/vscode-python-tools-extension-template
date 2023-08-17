@@ -33,6 +33,8 @@ You should know to create and work with python virtual environments.
     1. Find and replace `<pytool-module>` with module name for your tool. This will be used internally to create settings namespace, register commands, etc. Recommendation is to use lower case version of the name, no spaces, `-` are ok. For example, replacing `<pytool-module>` with `pylint` will lead to settings looking like `pylint.args`. Another example, replacing `<pytool-module>` with `black-formatter` will make settings look like `black-formatter.args`.
     1. Find and replace `<pytool-display-name>` with display name for your tool. This is used as the title for the extension in market place, extensions view, output logs, etc. For example, for the `black` extension this is `Black Formatter`.
 1. Install node packages using `npm install`.
+1. Go to https://marketplace.visualstudio.com/vscode and create a publisher account if you don't already have one.
+    1. Use the published name in `package.json` by replacing `<my-publisher>` with the name you got from marketplace.
 
 ## Features of this Template
 
