@@ -369,13 +369,15 @@ def _get_settings_by_document(document: workspace.Document | None):
 def _run_tool_on_document(
     document: workspace.Document,
     use_stdin: bool = False,
-    extra_args: Sequence[str] = [],
+    extra_args: Optional[Sequence[str]] = None,
 ) -> utils.RunResult | None:
     """Runs tool on the given document.
 
     if use_stdin is true then contents of the document is passed to the
     tool via stdin.
     """
+    if extra_args is None:
+        extra_args = []
     if str(document.uri).startswith("vscode-notebook-cell"):
         # TODO: Decide on if you want to skip notebook cells.
         # Skip notebook cells
