@@ -17,18 +17,21 @@ from typing import Any, Optional, Sequence
 # **********************************************************
 # Update sys.path before importing any bundled libraries.
 # **********************************************************
-def update_sys_path(path_to_add: str, strategy: str) -> None:
+def update_sys_path(libs_path: str, tool_libs_path: str, strategy: str) -> None:
     """Add given path to `sys.path`."""
-    if path_to_add not in sys.path and os.path.isdir(path_to_add):
+    if tool_libs_path not in sys.path and os.path.isdir(tool_libs_path):
         if strategy == "useBundled":
-            sys.path.insert(0, path_to_add)
+            sys.path.insert(0, tool_libs_path)
         elif strategy == "fromEnvironment":
-            sys.path.append(path_to_add)
+            sys.path.append(tool_libs_path)
+    if libs_path not in sys.path:
+        sys.path.insert(0, libs_path)
 
 
 # Ensure that we can import LSP libraries, and other bundled libraries.
 update_sys_path(
     os.fspath(pathlib.Path(__file__).parent.parent / "libs"),
+    os.fspath(pathlib.Path(__file__).parent.parent / "tool-libs"),
     os.getenv("LS_IMPORT_STRATEGY", "useBundled"),
 )
 

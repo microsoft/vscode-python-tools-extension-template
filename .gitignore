@@ -7,6 +7,7 @@ node_modules
 .vs/
 .nox/
 bundled/libs/
+bundled/tool-libs/
 **/__pycache__
 **/.pytest_cache
 **/.vs

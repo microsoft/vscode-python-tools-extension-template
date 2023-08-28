@@ -23,6 +23,21 @@ def _install_bundle(session: nox.Session) -> None:
         "-r",
         "./requirements.txt",
     )
+    _install_tool_libs(session)
+
+
+def _install_tool_libs(session: nox.Session) -> None:
+    session.install(
+        "-t",
+        "./bundled/tool-libs",
+        "--no-cache-dir",
+        "--implementation",
+        "py",
+        "--no-deps",
+        "--upgrade",
+        "-r",
+        "./requirements-tool.txt",
+    )
 
 
 def _check_files(names: List[str]) -> None:
@@ -36,6 +51,7 @@ def _check_files(names: List[str]) -> None:
 
 def _update_pip_packages(session: nox.Session) -> None:
     session.run("pip-compile", "--generate-hashes", "--resolver=backtracking", "--upgrade", "./requirements.in")
+    session.run("pip-compile", "--generate-hashes", "--resolver=backtracking", "--upgrade", "./requirements-tool.in")
     session.run(
         "pip-compile",
         "--generate-hashes",
