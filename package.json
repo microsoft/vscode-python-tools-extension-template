@@ -83,7 +83,7 @@
                     "type": "array"
                 },
                 "<pytool-module>.importStrategy": {
-                    "default": "fromEnvironment",
+                    "default": "useBundled",
                     "description": "Defines where `<pytool-module>` is imported from. This setting may be ignored if `<pytool-module>.path` is set.",
                     "enum": [
                         "useBundled",
