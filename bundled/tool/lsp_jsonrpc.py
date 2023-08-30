@@ -243,8 +243,8 @@ def run_over_json_rpc(
             "", f"Invalid result for request: {json.dumps(msg, indent=4)}"
         )
 
+    result = data["result"] if "result" in data else ""
     if "error" in data:
-        result = data["result"] if "result" in data else ""
         error = data["error"]
 
         if data.get("exception", False):
