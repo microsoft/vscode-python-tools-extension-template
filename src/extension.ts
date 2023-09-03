@@ -50,9 +50,11 @@ export async function activate(context: vscode.ExtensionContext): Promise<void> 
 
     const runServer = async () => {
         const interpreter = getInterpreterFromSetting(serverId);
-        if (interpreter && interpreter.length > 0 && checkVersion(await resolveInterpreter(interpreter))) {
-            traceVerbose(`Using interpreter from ${serverInfo.module}.interpreter: ${interpreter.join(' ')}`);
-            lsClient = await restartServer(serverId, serverName, outputChannel, lsClient);
+        if (interpreter && interpreter.length > 0) {
+            if (checkVersion(await resolveInterpreter(interpreter))) {
+                traceVerbose(`Using interpreter from ${serverInfo.module}.interpreter: ${interpreter.join(' ')}`);
+                lsClient = await restartServer(serverId, serverName, outputChannel, lsClient);
+            }
             return;
         }
 
