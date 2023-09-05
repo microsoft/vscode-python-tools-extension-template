@@ -313,6 +313,7 @@ def _update_workspace_settings(settings):
     for setting in settings:
         key = uris.to_fs_path(setting["workspace"])
         WORKSPACE_SETTINGS[key] = {
+            "cwd": key,
             **setting,
             "workspaceFS": key,
         }
