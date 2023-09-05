@@ -67,7 +67,7 @@ export async function getWorkspaceSettings(
         args: resolveVariables(config.get<string[]>(`args`) ?? [], workspace),
         path: resolveVariables(config.get<string[]>(`path`) ?? [], workspace),
         interpreter: resolveVariables(interpreter, workspace),
-        importStrategy: config.get<string>(`importStrategy`) ?? 'fromEnvironment',
+        importStrategy: config.get<string>(`importStrategy`) ?? 'useBundled',
         showNotifications: config.get<string>(`showNotifications`) ?? 'off',
     };
     return workspaceSetting;
@@ -95,7 +95,7 @@ export async function getGlobalSettings(namespace: string, includeInterpreter?: 
         args: getGlobalValue<string[]>(config, 'args', []),
         path: getGlobalValue<string[]>(config, 'path', []),
         interpreter: interpreter,
-        importStrategy: getGlobalValue<string>(config, 'importStrategy', 'fromEnvironment'),
+        importStrategy: getGlobalValue<string>(config, 'importStrategy', 'useBundled'),
         showNotifications: getGlobalValue<string>(config, 'showNotifications', 'off'),
     };
     return setting;
