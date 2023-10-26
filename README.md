@@ -13,7 +13,7 @@ The TypeScript part handles working with VS Code and its UI. The extension templ
 ## Requirements
 
 1. VS Code 1.64.0 or greater
-1. Python 3.7 or greater
+1. Python 3.8 or greater
 1. node >= 14.19.0
 1. npm >= 8.3.0 (`npm` is installed with node, check npm version, use `npm install -g npm@8.3.0` to update)
 1. Python extension for VS Code
