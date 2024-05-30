@@ -99,7 +99,7 @@ You can follow how `restart` command is implemented in `package.json` and `exten
 
 ## Testing
 
-See `src\test\python_tests\test_server.py` for starting point. See, other referred projects here for testing various aspects of running the tool over LSP.
+See `src/test/python_tests/test_server.py` for starting point. See, other referred projects here for testing various aspects of running the tool over LSP.
 
 If you have installed the test requirements you should be able to see the tests in the test explorer.
 
