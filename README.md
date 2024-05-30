@@ -141,7 +141,7 @@ To manually upgrade your local project:
 
 ### Changing path or name of `lsp_server.py` something else
 
-If you want to change the name of `lsp_server.py` to something else, you can. Be sure to update `constants.ts` and `src\test\python_tests\lsp_test_client\session.py`.
+If you want to change the name of `lsp_server.py` to something else, you can. Be sure to update `constants.ts` and `src/test/python_tests/lsp_test_client/session.py`.
 
 Also make sure that the inserted paths in `lsp_server.py` are pointing to the right folders to pick up the dependent packages.
 
