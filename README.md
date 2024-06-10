@@ -99,7 +99,7 @@ You can follow how `restart` command is implemented in `package.json` and `exten
 
 ## Testing
 
-See `src\test\python_tests\test_server.py` for starting point. See, other referred projects here for testing various aspects of running the tool over LSP.
+See `src/test/python_tests/test_server.py` for starting point. See, other referred projects here for testing various aspects of running the tool over LSP.
 
 If you have installed the test requirements you should be able to see the tests in the test explorer.
 
@@ -141,7 +141,7 @@ To manually upgrade your local project:
 
 ### Changing path or name of `lsp_server.py` something else
 
-If you want to change the name of `lsp_server.py` to something else, you can. Be sure to update `constants.ts` and `src\test\python_tests\lsp_test_client\session.py`.
+If you want to change the name of `lsp_server.py` to something else, you can. Be sure to update `constants.ts` and `src/test/python_tests/lsp_test_client/session.py`.
 
 Also make sure that the inserted paths in `lsp_server.py` are pointing to the right folders to pick up the dependent packages.
 
