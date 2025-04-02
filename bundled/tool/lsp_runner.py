@@ -45,6 +45,7 @@ while not EXIT_NOW:
         continue
 
     if method == "run":
+        # pylint: disable=invalid-name
         is_exception = False
         # This is needed to preserve sys.path, pylint modifies
         # sys.path and that might not work for this scenario

@@ -1,6 +1,7 @@
 # Copyright (c) Microsoft Corporation. All rights reserved.
 # Licensed under the MIT License.
 """Implementation of tool support over LSP."""
+
 from __future__ import annotations
 
 import copy
@@ -9,7 +10,6 @@ import os
 import pathlib
 import re
 import sys
-import sysconfig
 import traceback
 from typing import Any, Optional, Sequence
 
@@ -367,6 +367,7 @@ def _get_settings_by_document(document: workspace.Document | None):
 # *****************************************************
 # Internal execution APIs.
 # *****************************************************
+# pylint: disable=too-many-branches
 def _run_tool_on_document(
     document: workspace.Document,
     use_stdin: bool = False,
@@ -557,7 +558,8 @@ def _run_tool(extra_args: Sequence[str]) -> utils.RunResult:
                 # If your tool supports a programmatic API then replace the function below
                 # with code for your tool. You can also use `utils.run_api` helper, which
                 # handles changing working directories, managing io streams, etc.
-                # Also update `_run_tool_on_document` function and `utils.run_module` in `lsp_runner.py`.
+                # Also update `_run_tool_on_document` function and
+                # `utils.run_module` in `lsp_runner.py`.
                 result = utils.run_module(
                     module=TOOL_MODULE, argv=argv, use_stdin=True, cwd=cwd
                 )
@@ -574,6 +576,7 @@ def _run_tool(extra_args: Sequence[str]) -> utils.RunResult:
 # *****************************************************
 # Logging and notification.
 # *****************************************************
+# pylint: disable=missing-function-docstring
 def log_to_output(
     message: str, msg_type: lsp.MessageType = lsp.MessageType.Log
 ) -> None:

@@ -1,6 +1,6 @@
 # This file is used to generate ./src/test/python_tests/requirements.txt.
 # NOTE:
-# Use Python 3.8 or greater which ever is the minimum version of the python
+# Use Python 3.9 or greater which ever is the minimum version of the python
 # you plan on supporting when creating the environment or using pip-tools.
 # Only run the commands below to manully upgrade packages in requirements.txt:
 # 1) python -m pip install pip-tools
