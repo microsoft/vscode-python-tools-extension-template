@@ -13,7 +13,7 @@ The TypeScript part handles working with VS Code and its UI. The extension templ
 ## Requirements
 
 1. VS Code 1.64.0 or greater
-1. Python 3.8 or greater
+1. Python 3.9 or greater
 1. node >= 18.17.0
 1. npm >= 8.19.0 (`npm` is installed with node, check npm version, use `npm install -g npm@8.3.0` to update)
 1. Python extension for VS Code
@@ -24,7 +24,7 @@ You should know to create and work with python virtual environments.
 
 1. Use this [template to create your repo](https://docs.github.com/en/repositories/creating-and-managing-repositories/creating-a-repository-from-a-template).
 1. Check-out your repo locally on your development machine.
-1. Create and activate a python virtual environment for this project in a terminal. Be sure to use the minimum version of python for your tool. This template was written to work with python 3.8 or greater.
+1. Create and activate a python virtual environment for this project in a terminal. Be sure to use the minimum version of python for your tool. This template was written to work with python 3.9 or greater.
 1. Install `nox` in the activated environment: `python -m pip install nox`.
 1. Add your favorite tool to `requirements.in`
 1. Run `nox --session setup`.
