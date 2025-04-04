@@ -142,7 +142,7 @@
         "@types/fs-extra": "^11.0.4",
         "@types/vscode": "1.78.0",
         "@types/glob": "^8.1.0",
-        "@types/node": "16.x",
+        "@types/node": "20.x",
         "@typescript-eslint/eslint-plugin": "^6.17.0",
         "@typescript-eslint/parser": "^6.17.0",
         "@vscode/test-electron": "^2.3.8",
