@@ -12,7 +12,7 @@ import {
     resolveInterpreter,
 } from './common/python';
 import { restartServer } from './common/server';
-import { checkIfConfigurationChanged, getInterpreterFromSetting } from './common/settings';
+import { checkIfConfigurationChanged, getInterpreterFromSetting, getServerEnabled } from './common/settings';
 import { loadServerDefaults } from './common/setup';
 import { getLSClientTraceLevel } from './common/utilities';
 import { createOutputChannel, onDidChangeConfiguration, registerCommand } from './common/vscodeapi';
@@ -55,6 +55,18 @@ export async function activate(context: vscode.ExtensionContext): Promise<void> 
         }
         isRestarting = true;
         try {
+            if (!getServerEnabled(serverId)) {
+                if (lsClient) {
+                    try {
+                        await lsClient.stop();
+                    } catch (ex) {
+                        traceError(`Server: Stop failed: ${ex}`);
+                    }
+                    lsClient = undefined;
+                }
+                return;
+            }
+
             const interpreter = getInterpreterFromSetting(serverId);
             if (interpreter && interpreter.length > 0) {
                 if (checkVersion(await resolveInterpreter(interpreter))) {
