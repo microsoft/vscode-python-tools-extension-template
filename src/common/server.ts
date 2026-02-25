@@ -86,7 +86,9 @@ export async function restartServer(
 ): Promise<LanguageClient | undefined> {
     if (lsClient) {
         traceInfo(`Server: Stop requested`);
-        await lsClient.stop();
+        await lsClient.stop(2000).catch(() => {
+            traceError(`Server: Stop timed out, forcing termination`);
+        });
         _disposables.forEach((d) => d.dispose());
         _disposables = [];
     }

@@ -10,6 +10,7 @@ import pathlib
 import re
 import sys
 import sysconfig
+import threading
 import traceback
 from typing import Any, Optional, Sequence
 
@@ -601,5 +602,29 @@ def log_always(message: str) -> None:
 # *****************************************************
 # Start the server.
 # *****************************************************
+def _stdin_watchdog() -> None:
+    """Watch for stdin closure and exit if the parent process is gone."""
+    while True:
+        try:
+            if sys.stdin.closed:
+                os._exit(0)
+            # On Unix, select() on a closed pipe returns the fd as readable,
+            # and a subsequent read returns EOF. On Windows, just poll the closed flag.
+            if hasattr(__import__("select"), "select"):
+                readable, _, _ = __import__("select").select([sys.stdin], [], [], 5.0)
+                if readable:
+                    data = sys.stdin.read(1)
+                    if data == "":
+                        os._exit(0)
+            else:
+                __import__("time").sleep(5)
+                if sys.stdin.closed:
+                    os._exit(0)
+        except Exception:  # pylint: disable=broad-except
+            os._exit(0)
+
+
 if __name__ == "__main__":
+    watchdog = threading.Thread(target=_stdin_watchdog, daemon=True)
+    watchdog.start()
     LSP_SERVER.start_io()
