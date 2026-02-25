@@ -48,29 +48,43 @@ export async function activate(context: vscode.ExtensionContext): Promise<void> 
     traceLog(`Module: ${serverInfo.module}`);
     traceVerbose(`Full Server Info: ${JSON.stringify(serverInfo)}`);
 
+    let isRestarting = false;
+    let restartTimer: NodeJS.Timeout | undefined;
     const runServer = async () => {
-        const interpreter = getInterpreterFromSetting(serverId);
-        if (interpreter && interpreter.length > 0) {
-            if (checkVersion(await resolveInterpreter(interpreter))) {
-                traceVerbose(`Using interpreter from ${serverInfo.module}.interpreter: ${interpreter.join(' ')}`);
-                lsClient = await restartServer(serverId, serverName, outputChannel, lsClient);
+        if (isRestarting) {
+            if (restartTimer) {
+                clearTimeout(restartTimer);
             }
+            restartTimer = setTimeout(runServer, 1000);
             return;
         }
+        isRestarting = true;
+        try {
+            const interpreter = getInterpreterFromSetting(serverId);
+            if (interpreter && interpreter.length > 0) {
+                if (checkVersion(await resolveInterpreter(interpreter))) {
+                    traceVerbose(`Using interpreter from ${serverInfo.module}.interpreter: ${interpreter.join(' ')}`);
+                    lsClient = await restartServer(serverId, serverName, outputChannel, lsClient);
+                }
+                return;
+            }
 
-        const interpreterDetails = await getInterpreterDetails();
-        if (interpreterDetails.path) {
-            traceVerbose(`Using interpreter from Python extension: ${interpreterDetails.path.join(' ')}`);
-            lsClient = await restartServer(serverId, serverName, outputChannel, lsClient);
-            return;
+            const interpreterDetails = await getInterpreterDetails();
+            if (interpreterDetails.path) {
+                traceVerbose(`Using interpreter from Python extension: ${interpreterDetails.path.join(' ')}`);
+                lsClient = await restartServer(serverId, serverName, outputChannel, lsClient);
+                return;
+            }
+
+            traceError(
+                'Python interpreter missing:\r\n' +
+                    '[Option 1] Select python interpreter using the ms-python.python.\r\n' +
+                    `[Option 2] Set an interpreter using "${serverId}.interpreter" setting.\r\n` +
+                    'Please use Python 3.8 or greater.',
+            );
+        } finally {
+            isRestarting = false;
         }
-
-        traceError(
-            'Python interpreter missing:\r\n' +
-                '[Option 1] Select python interpreter using the ms-python.python.\r\n' +
-                `[Option 2] Set an interpreter using "${serverId}.interpreter" setting.\r\n` +
-                'Please use Python 3.8 or greater.',
-        );
     };
 
     context.subscriptions.push(
