@@ -108,7 +108,13 @@ export function checkIfConfigurationChanged(e: ConfigurationChangeEvent, namespa
         `${namespace}.interpreter`,
         `${namespace}.importStrategy`,
         `${namespace}.showNotifications`,
+        `${namespace}.serverEnabled`,
     ];
     const changed = settings.map((s) => e.affectsConfiguration(s));
     return changed.includes(true);
+}
+
+export function getServerEnabled(namespace: string): boolean {
+    const config = getConfiguration(namespace);
+    return config.get<boolean>('serverEnabled', true);
 }

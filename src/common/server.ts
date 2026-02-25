@@ -86,10 +86,14 @@ export async function restartServer(
 ): Promise<LanguageClient | undefined> {
     if (lsClient) {
         traceInfo(`Server: Stop requested`);
-        await lsClient.stop();
-        _disposables.forEach((d) => d.dispose());
-        _disposables = [];
+        try {
+            await lsClient.stop();
+        } catch (ex) {
+            traceError(`Server: Stop failed: ${ex}`);
+        }
     }
+    _disposables.forEach((d) => d.dispose());
+    _disposables = [];
     const projectRoot = await getProjectRoot();
     const workspaceSetting = await getWorkspaceSettings(serverId, projectRoot, true);
 
