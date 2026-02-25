@@ -18,6 +18,8 @@ import { getLSClientTraceLevel } from './common/utilities';
 import { createOutputChannel, onDidChangeConfiguration, registerCommand } from './common/vscodeapi';
 
 let lsClient: LanguageClient | undefined;
+let isRestarting = false;
+let restartTimer: NodeJS.Timeout | undefined;
 export async function activate(context: vscode.ExtensionContext): Promise<void> {
     // This is required to get server name and module. This should be
     // the first thing that we do in this extension.
@@ -48,8 +50,6 @@ export async function activate(context: vscode.ExtensionContext): Promise<void> 
     traceLog(`Module: ${serverInfo.module}`);
     traceVerbose(`Full Server Info: ${JSON.stringify(serverInfo)}`);
 
-    let isRestarting = false;
-    let restartTimer: NodeJS.Timeout | undefined;
     const runServer = async () => {
         if (isRestarting) {
             if (restartTimer) {
@@ -114,7 +114,14 @@ export async function activate(context: vscode.ExtensionContext): Promise<void> 
 }
 
 export async function deactivate(): Promise<void> {
+    if (restartTimer) {
+        clearTimeout(restartTimer);
+    }
     if (lsClient) {
-        await lsClient.stop();
+        try {
+            await lsClient.stop();
+        } catch (ex) {
+            traceError(`Server: Stop failed: ${ex}`);
+        }
     }
 }
