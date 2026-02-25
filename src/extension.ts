@@ -19,7 +19,6 @@ import { createOutputChannel, onDidChangeConfiguration, registerCommand } from '
 
 let lsClient: LanguageClient | undefined;
 let isRestarting = false;
-let restartTimer: NodeJS.Timeout | undefined;
 export async function activate(context: vscode.ExtensionContext): Promise<void> {
     // This is required to get server name and module. This should be
     // the first thing that we do in this extension.
@@ -52,10 +51,6 @@ export async function activate(context: vscode.ExtensionContext): Promise<void> 
 
     const runServer = async () => {
         if (isRestarting) {
-            if (restartTimer) {
-                clearTimeout(restartTimer);
-            }
-            restartTimer = setTimeout(runServer, 1000);
             return;
         }
         isRestarting = true;
@@ -114,9 +109,6 @@ export async function activate(context: vscode.ExtensionContext): Promise<void> 
 }
 
 export async function deactivate(): Promise<void> {
-    if (restartTimer) {
-        clearTimeout(restartTimer);
-    }
     if (lsClient) {
         try {
             await lsClient.stop();
