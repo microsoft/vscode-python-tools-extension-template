@@ -14,11 +14,13 @@ import {
 import { restartServer } from './common/server';
 import { checkIfConfigurationChanged, getInterpreterFromSetting, getServerEnabled } from './common/settings';
 import { loadServerDefaults } from './common/setup';
+import { LS_SERVER_RESTART_DELAY } from './common/constants';
 import { getLSClientTraceLevel } from './common/utilities';
 import { createOutputChannel, onDidChangeConfiguration, registerCommand } from './common/vscodeapi';
 
 let lsClient: LanguageClient | undefined;
 let isRestarting = false;
+let restartTimer: NodeJS.Timeout | undefined;
 export async function activate(context: vscode.ExtensionContext): Promise<void> {
     // This is required to get server name and module. This should be
     // the first thing that we do in this extension.
@@ -51,6 +53,10 @@ export async function activate(context: vscode.ExtensionContext): Promise<void> 
 
     const runServer = async () => {
         if (isRestarting) {
+            if (restartTimer) {
+                clearTimeout(restartTimer);
+            }
+            restartTimer = setTimeout(runServer, LS_SERVER_RESTART_DELAY);
             return;
         }
         isRestarting = true;
