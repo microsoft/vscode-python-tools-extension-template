@@ -62,14 +62,8 @@ export async function activate(context: vscode.ExtensionContext): Promise<void> 
         isRestarting = true;
         try {
             if (!getServerEnabled(serverId)) {
-                if (lsClient) {
-                    try {
-                        await lsClient.stop();
-                    } catch (ex) {
-                        traceError(`Server: Stop failed: ${ex}`);
-                    }
-                    lsClient = undefined;
-                }
+                await deactivate();
+                lsClient = undefined;
                 return;
             }
 
