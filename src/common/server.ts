@@ -91,9 +91,9 @@ export async function restartServer(
         } catch (ex) {
             traceError(`Server: Stop failed: ${ex}`);
         }
-        _disposables.forEach((d) => d.dispose());
-        _disposables = [];
     }
+    _disposables.forEach((d) => d.dispose());
+    _disposables = [];
     const projectRoot = await getProjectRoot();
     const workspaceSetting = await getWorkspaceSettings(serverId, projectRoot, true);
 
