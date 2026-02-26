@@ -46,6 +46,11 @@ export function getInterpreterFromSetting(namespace: string, scope?: Configurati
     return config.get<string[]>('interpreter');
 }
 
+function getCwd(config: WorkspaceConfiguration, workspace: WorkspaceFolder): string {
+    const cwd = config.get<string>('cwd', '${workspaceFolder}');
+    return resolveVariables([cwd], workspace)[0];
+}
+
 export async function getWorkspaceSettings(
     namespace: string,
     workspace: WorkspaceFolder,
@@ -62,7 +67,7 @@ export async function getWorkspaceSettings(
     }
 
     const workspaceSetting = {
-        cwd: workspace.uri.fsPath,
+        cwd: getCwd(config, workspace),
         workspace: workspace.uri.toString(),
         args: resolveVariables(config.get<string[]>(`args`) ?? [], workspace),
         path: resolveVariables(config.get<string[]>(`path`) ?? [], workspace),
@@ -104,6 +109,7 @@ export async function getGlobalSettings(namespace: string, includeInterpreter?: 
 export function checkIfConfigurationChanged(e: ConfigurationChangeEvent, namespace: string): boolean {
     const settings = [
         `${namespace}.args`,
+        `${namespace}.cwd`,
         `${namespace}.path`,
         `${namespace}.interpreter`,
         `${namespace}.importStrategy`,
