@@ -64,6 +64,12 @@
     "contributes": {
         "configuration": {
             "properties": {
+                "<pytool-module>.cwd": {
+                    "default": "${workspaceFolder}",
+                    "description": "Sets the working directory for <pytool-module>. Supported variables: `${workspaceFolder}` (workspace root) and `${fileDirname}` (directory of the current file).",
+                    "scope": "resource",
+                    "type": "string"
+                },
                 "<pytool-module>.args": {
                     "default": [],
                     "description": "Arguments passed in. Each argument is a separate item in the array.",

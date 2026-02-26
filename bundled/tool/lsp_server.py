@@ -289,6 +289,26 @@ def on_shutdown(_params: Optional[Any] = None) -> None:
     jsonrpc.shutdown_json_rpc()
 
 
+def get_cwd(settings: dict, document: Optional[workspace.Document]) -> str:
+    """Returns the working directory for running the tool.
+
+    Supports the following variable substitutions:
+    - ``${fileDirname}``: resolved to the directory of the current document.
+      If no document is available, falls back to the workspace root.
+    - ``${workspaceFolder}``: pre-resolved by the TypeScript client before
+      the settings are sent to this server.
+
+    Examples of supported patterns: ``${fileDirname}``, ``${fileDirname}/subdir``.
+    """
+    cwd = settings.get("cwd", settings["workspaceFS"])
+    if "${fileDirname}" in cwd:
+        if document and document.path:
+            cwd = cwd.replace("${fileDirname}", os.path.dirname(document.path))
+        else:
+            cwd = settings["workspaceFS"]
+    return cwd
+
+
 def _get_global_defaults():
     return {
         "path": GLOBAL_SETTINGS.get("path", []),
@@ -393,7 +413,7 @@ def _run_tool_on_document(
     settings = copy.deepcopy(_get_settings_by_document(document))
 
     code_workspace = settings["workspaceFS"]
-    cwd = settings["cwd"]
+    cwd = get_cwd(settings, document)
 
     use_path = False
     use_rpc = False
@@ -498,7 +518,7 @@ def _run_tool(extra_args: Sequence[str]) -> utils.RunResult:
     settings = copy.deepcopy(_get_settings_by_document(None))
 
     code_workspace = settings["workspaceFS"]
-    cwd = settings["workspaceFS"]
+    cwd = get_cwd(settings, None)
 
     use_path = False
     use_rpc = False
