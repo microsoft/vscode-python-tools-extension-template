@@ -292,17 +292,57 @@ def on_shutdown(_params: Optional[Any] = None) -> None:
 def get_cwd(settings: dict, document: Optional[workspace.Document]) -> str:
     """Returns the working directory for running the tool.
 
-    Resolves ``${fileDirname}`` to the directory of the current document.
-    If no document is available, falls back to the workspace root.
+    Resolves the following VS Code file-related variable substitutions when
+    a document is available:
 
-    Examples of supported patterns: ``${fileDirname}``, ``${fileDirname}/subdir``.
+    - ``${file}`` – absolute path of the current document.
+    - ``${fileBasename}`` – file name with extension (e.g. ``foo.py``).
+    - ``${fileBasenameNoExtension}`` – file name without extension (e.g. ``foo``).
+    - ``${fileExtname}`` – file extension including the dot (e.g. ``.py``).
+    - ``${fileDirname}`` – directory containing the current document.
+    - ``${fileDirnameBasename}`` – name of the directory containing the document.
+    - ``${relativeFile}`` – document path relative to the workspace root.
+    - ``${relativeFileDirname}`` – document directory relative to the workspace root.
+    - ``${fileWorkspaceFolder}`` – workspace root folder for the document.
+
+    Variables that do not depend on the document (``${workspaceFolder}``,
+    ``${userHome}``, ``${cwd}``) are pre-resolved by the TypeScript client.
+
+    If no document is available and the value contains any unresolvable
+    file-variable, the workspace root is returned as a fallback.
+
+    See https://code.visualstudio.com/docs/reference/variables-reference
     """
     cwd = settings.get("cwd", settings["workspaceFS"])
-    if "${fileDirname}" in cwd:
-        if document and document.path:
-            cwd = cwd.replace("${fileDirname}", os.path.dirname(document.path))
-        else:
-            cwd = settings["workspaceFS"]
+
+    workspace_fs = settings["workspaceFS"]
+
+    if document and document.path:
+        file_path = document.path
+        file_dir = os.path.dirname(file_path)
+        file_basename = os.path.basename(file_path)
+        file_stem, file_ext = os.path.splitext(file_basename)
+
+        substitutions = {
+            "${file}": file_path,
+            "${fileBasename}": file_basename,
+            "${fileBasenameNoExtension}": file_stem,
+            "${fileExtname}": file_ext,
+            "${fileDirname}": file_dir,
+            "${fileDirnameBasename}": os.path.basename(file_dir),
+            "${relativeFile}": os.path.relpath(file_path, workspace_fs),
+            "${relativeFileDirname}": os.path.relpath(file_dir, workspace_fs),
+            "${fileWorkspaceFolder}": workspace_fs,
+        }
+
+        for token, value in substitutions.items():
+            cwd = cwd.replace(token, value)
+    else:
+        # Without a document we cannot resolve file-related variables.
+        # Fall back to workspace root if any remain.
+        if "${file" in cwd or "${relativeFile" in cwd:
+            cwd = workspace_fs
+
     return cwd
 
 
@@ -410,7 +450,7 @@ def _run_tool_on_document(
     settings = copy.deepcopy(_get_settings_by_document(document))
 
     code_workspace = settings["workspaceFS"]
-    # Pass document so get_cwd can resolve ${fileDirname} to this file's directory.
+    # Pass document so get_cwd can resolve file-related variables for this document.
     cwd = get_cwd(settings, document)
 
     use_path = False
