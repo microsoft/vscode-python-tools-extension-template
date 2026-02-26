@@ -292,11 +292,8 @@ def on_shutdown(_params: Optional[Any] = None) -> None:
 def get_cwd(settings: dict, document: Optional[workspace.Document]) -> str:
     """Returns the working directory for running the tool.
 
-    Supports the following variable substitutions:
-    - ``${fileDirname}``: resolved to the directory of the current document.
-      If no document is available, falls back to the workspace root.
-    - ``${workspaceFolder}``: pre-resolved by the TypeScript client before
-      the settings are sent to this server.
+    Resolves ``${fileDirname}`` to the directory of the current document.
+    If no document is available, falls back to the workspace root.
 
     Examples of supported patterns: ``${fileDirname}``, ``${fileDirname}/subdir``.
     """
@@ -413,6 +410,7 @@ def _run_tool_on_document(
     settings = copy.deepcopy(_get_settings_by_document(document))
 
     code_workspace = settings["workspaceFS"]
+    # Pass document so get_cwd can resolve ${fileDirname} to this file's directory.
     cwd = get_cwd(settings, document)
 
     use_path = False
