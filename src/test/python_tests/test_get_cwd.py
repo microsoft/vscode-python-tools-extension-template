@@ -2,9 +2,75 @@
 # Licensed under the MIT License.
 """Unit tests for the get_cwd() helper in lsp_server."""
 import os
+import pathlib
+import sys
 import types
 
-import lsp_server
+# ---------------------------------------------------------------------------
+# Stub out bundled LSP dependencies so lsp_server can be imported without the
+# full VS Code extension environment.
+# ---------------------------------------------------------------------------
+def _setup_mocks():
+    class _MockLS:
+        def __init__(self, **kwargs):
+            pass
+
+        def feature(self, *args, **kwargs):
+            return lambda f: f
+
+        def command(self, *args, **kwargs):
+            return lambda f: f
+
+        def show_message_log(self, *args, **kwargs):
+            pass
+
+        def show_message(self, *args, **kwargs):
+            pass
+
+    mock_server = types.ModuleType("pygls.server")
+    mock_server.LanguageServer = _MockLS
+
+    mock_workspace = types.ModuleType("pygls.workspace")
+    mock_workspace.Document = type("Document", (), {"path": None})
+
+    mock_uris = types.ModuleType("pygls.uris")
+    mock_uris.from_fs_path = lambda p: "file://" + p
+
+    mock_lsp = types.ModuleType("lsprotocol.types")
+    for _name in [
+        "TEXT_DOCUMENT_DID_OPEN", "TEXT_DOCUMENT_DID_SAVE", "TEXT_DOCUMENT_DID_CLOSE",
+        "TEXT_DOCUMENT_FORMATTING", "INITIALIZE", "EXIT", "SHUTDOWN",
+    ]:
+        setattr(mock_lsp, _name, _name)
+    for _name in [
+        "Diagnostic", "DiagnosticSeverity", "DidCloseTextDocumentParams",
+        "DidOpenTextDocumentParams", "DidSaveTextDocumentParams",
+        "DocumentFormattingParams", "InitializeParams", "Position", "Range", "TextEdit",
+    ]:
+        setattr(mock_lsp, _name, type(_name, (), {}))
+    mock_lsp.MessageType = type("MessageType", (), {"Log": 4, "Error": 1, "Warning": 2, "Info": 3})
+
+    for _mod_name, _mod in [
+        ("pygls", types.ModuleType("pygls")),
+        ("pygls.server", mock_server),
+        ("pygls.workspace", mock_workspace),
+        ("pygls.uris", mock_uris),
+        ("lsprotocol", types.ModuleType("lsprotocol")),
+        ("lsprotocol.types", mock_lsp),
+        ("lsp_jsonrpc", types.ModuleType("lsp_jsonrpc")),
+        ("lsp_utils", types.ModuleType("lsp_utils")),
+    ]:
+        if _mod_name not in sys.modules:
+            sys.modules[_mod_name] = _mod
+
+    tool_dir = str(pathlib.Path(__file__).parents[3] / "bundled" / "tool")
+    if tool_dir not in sys.path:
+        sys.path.insert(0, tool_dir)
+
+
+_setup_mocks()
+
+import lsp_server  # noqa: E402
 
 WORKSPACE = "/home/user/myproject"
 
