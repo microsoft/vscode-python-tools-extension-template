@@ -44,6 +44,7 @@ async function getEnvironmentsExtensionAPI(): Promise<PythonEnvironmentsAPI | un
 
 export async function initializePython(disposables: Disposable[]): Promise<void> {
     try {
+        // // Prefer the Python Environments extension if it's available, as it provides a more comprehensive view of the available environments.
         const envsApi = await getEnvironmentsExtensionAPI();
 
         if (envsApi) {
@@ -63,6 +64,7 @@ export async function initializePython(disposables: Disposable[]): Promise<void>
             return;
         }
 
+        // Fall back to legacy ms-python.python extension API
         const api = await getPythonExtensionAPI();
 
         if (api) {
@@ -86,6 +88,7 @@ export async function resolveInterpreter(interpreter: string[]): Promise<Resolve
 }
 
 export async function getInterpreterDetails(resource?: Uri): Promise<IInterpreterDetails> {
+    // Prefer the Python Environments extension if it's available, as it provides a more comprehensive view of the available environments.
     const envsApi = await getEnvironmentsExtensionAPI();
     if (envsApi) {
         const environment = await envsApi.getEnvironment(resource);
@@ -98,6 +101,7 @@ export async function getInterpreterDetails(resource?: Uri): Promise<IInterprete
         return { path: undefined, resource };
     }
 
+    // Fall back to legacy ms-python.python extension API
     const api = await getPythonExtensionAPI();
     const environment = await api?.environments.resolveEnvironment(
         api?.environments.getActiveEnvironmentPath(resource),
