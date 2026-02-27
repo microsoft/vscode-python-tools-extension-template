@@ -2,9 +2,10 @@
 // Licensed under the MIT License.
 
 /* eslint-disable @typescript-eslint/naming-convention */
-import { commands, Disposable, Event, EventEmitter, Uri } from 'vscode';
+import { commands, Disposable, Event, EventEmitter, extensions, Uri } from 'vscode';
 import { traceError, traceLog } from './log/logging';
 import { PythonExtension, ResolvedEnvironment } from '@vscode/python-extension';
+import { PythonEnvironmentsAPI } from '../typings/pythonEnvironments';
 
 export interface IInterpreterDetails {
     path?: string[];
@@ -23,8 +24,45 @@ async function getPythonExtensionAPI(): Promise<PythonExtension | undefined> {
     return _api;
 }
 
+const PYTHON_ENVIRONMENTS_EXTENSION_ID = 'ms-python.vscode-python-envs';
+
+let _envsApi: PythonEnvironmentsAPI | undefined;
+async function getEnvironmentsExtensionAPI(): Promise<PythonEnvironmentsAPI | undefined> {
+    if (_envsApi) {
+        return _envsApi;
+    }
+    const extension = extensions.getExtension(PYTHON_ENVIRONMENTS_EXTENSION_ID);
+    if (!extension) {
+        return undefined;
+    }
+    if (!extension.isActive) {
+        await extension.activate();
+    }
+    _envsApi = extension.exports as PythonEnvironmentsAPI;
+    return _envsApi;
+}
+
 export async function initializePython(disposables: Disposable[]): Promise<void> {
     try {
+        const envsApi = await getEnvironmentsExtensionAPI();
+
+        if (envsApi) {
+            disposables.push(
+                envsApi.onDidChangeEnvironment((e) => {
+                    onDidChangePythonInterpreterEvent.fire({
+                        path: e.new
+                            ? [e.new.execInfo.run.executable]
+                            : undefined,
+                        resource: e.uri,
+                    });
+                }),
+            );
+
+            traceLog('Waiting for interpreter from python environments extension.');
+            onDidChangePythonInterpreterEvent.fire(await getInterpreterDetails());
+            return;
+        }
+
         const api = await getPythonExtensionAPI();
 
         if (api) {
@@ -48,6 +86,18 @@ export async function resolveInterpreter(interpreter: string[]): Promise<Resolve
 }
 
 export async function getInterpreterDetails(resource?: Uri): Promise<IInterpreterDetails> {
+    const envsApi = await getEnvironmentsExtensionAPI();
+    if (envsApi) {
+        const environment = await envsApi.getEnvironment(resource);
+        if (environment) {
+            return {
+                path: [environment.execInfo.run.executable],
+                resource,
+            };
+        }
+        return { path: undefined, resource };
+    }
+
     const api = await getPythonExtensionAPI();
     const environment = await api?.environments.resolveEnvironment(
         api?.environments.getActiveEnvironmentPath(resource),
