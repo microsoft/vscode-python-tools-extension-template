@@ -45,7 +45,9 @@
     },
     "activationEvents": [
         "onLanguage:python",
-        "workspaceContains:*.py"
+        "workspaceContains:*.py",
+        "onNotebook:jupyter-notebook",
+        "onNotebook:interactive"
     ],
     "main": "./dist/extension.js",
     "scripts": {

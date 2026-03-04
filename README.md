@@ -71,6 +71,45 @@ References, to other extension created by our team using the template:
 - Implementation showing how to handle Formatting. [Black Formatter](https://github.com/microsoft/vscode-black-formatter/tree/main/bundled/tool)
 - Implementation showing how to handle Code Actions. [isort](https://github.com/microsoft/vscode-isort/blob/main/bundled/tool)
 
+## Jupyter Notebook Support
+
+This template includes built-in support for linting and formatting Python cells inside Jupyter notebooks (`.ipynb` files) and the VS Code Interactive Window, following the [LSP 3.17 Notebook Document Sync specification](https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification/#notebookDocument_synchronization).
+
+### How it works
+
+The server declares `NotebookDocumentSyncOptions` (in `lsp_server.py`) that tell the client which notebook types and cell languages to synchronize:
+
+```python
+NOTEBOOK_SYNC_OPTIONS = lsp.NotebookDocumentSyncOptions(
+    notebook_selector=[
+        lsp.NotebookDocumentFilterWithNotebook(
+            notebook="jupyter-notebook",
+            cells=[lsp.NotebookCellLanguage(language="python")],
+        ),
+        lsp.NotebookDocumentFilterWithNotebook(
+            notebook="interactive",
+            cells=[lsp.NotebookCellLanguage(language="python")],
+        ),
+    ],
+    save=True,
+)
+```
+
+Four notebook lifecycle handlers are registered:
+
+- `notebookDocument/didOpen` — diagnostics are published for every Python code cell when a notebook is opened.
+- `notebookDocument/didChange` — diagnostics are updated for cells whose text changed, new cells are linted, and removed cells have their diagnostics cleared.
+- `notebookDocument/didSave` — all Python code cells are re-linted on save.
+- `notebookDocument/didClose` — diagnostics are cleared for all cells when the notebook is closed.
+
+The `_get_document_path` helper resolves `vscode-notebook-cell:` URIs back to the parent notebook's filesystem path, so your tool receives a valid path even when processing a cell document.
+
+### Customizing notebook support
+
+- To disable notebook support entirely, remove the `notebook_document_sync=NOTEBOOK_SYNC_OPTIONS` argument from the `LanguageServer` constructor and delete the four `notebook_did_*` handlers.
+- To restrict which cell languages are supported, update the `cells` list in `NOTEBOOK_SYNC_OPTIONS`.
+- To change the linting/formatting behavior per cell, update the individual handlers.
+
 ## Building and Run the extension
 
 Run the `Debug Extension and Python` configuration form VS Code. That should build and debug the extension in host window.

@@ -11,6 +11,7 @@ import re
 import sys
 import sysconfig
 import traceback
+import urllib.parse
 from typing import Any, Optional, Sequence
 
 
@@ -46,9 +47,25 @@ GLOBAL_SETTINGS = {}
 RUNNER = pathlib.Path(__file__).parent / "lsp_runner.py"
 
 MAX_WORKERS = 5
+NOTEBOOK_SYNC_OPTIONS = lsp.NotebookDocumentSyncOptions(
+    notebook_selector=[
+        lsp.NotebookDocumentFilterWithNotebook(
+            notebook="jupyter-notebook",
+            cells=[lsp.NotebookCellLanguage(language="python")],
+        ),
+        lsp.NotebookDocumentFilterWithNotebook(
+            notebook="interactive",
+            cells=[lsp.NotebookCellLanguage(language="python")],
+        ),
+    ],
+    save=True,
+)
 # TODO: Update the language server name and version.
 LSP_SERVER = server.LanguageServer(
-    name="<pytool-display-name>", version="<server version>", max_workers=MAX_WORKERS
+    name="<pytool-display-name>",
+    version="<server version>",
+    max_workers=MAX_WORKERS,
+    notebook_document_sync=NOTEBOOK_SYNC_OPTIONS,
 )
 
 
@@ -110,6 +127,112 @@ def did_close(params: lsp.DidCloseTextDocumentParams) -> None:
     document = LSP_SERVER.workspace.get_document(params.text_document.uri)
     # Publishing empty diagnostics to clear the entries for this file.
     LSP_SERVER.publish_diagnostics(document.uri, [])
+
+
+@LSP_SERVER.feature(lsp.NOTEBOOK_DOCUMENT_DID_OPEN)
+def notebook_did_open(params: lsp.DidOpenNotebookDocumentParams) -> None:
+    """LSP handler for notebookDocument/didOpen request."""
+    nb = LSP_SERVER.workspace.get_notebook_document(
+        notebook_uri=params.notebook_document.uri
+    )
+    if nb is None:
+        return
+    for cell in nb.cells:
+        if cell.kind != lsp.NotebookCellKind.Code or cell.document is None:
+            continue
+        document = LSP_SERVER.workspace.get_text_document(cell.document)
+        diagnostics: list[lsp.Diagnostic] = _linting_helper(document)
+        LSP_SERVER.text_document_publish_diagnostics(
+            lsp.PublishDiagnosticsParams(uri=document.uri, diagnostics=diagnostics)
+        )
+
+
+@LSP_SERVER.feature(lsp.NOTEBOOK_DOCUMENT_DID_CHANGE)
+def notebook_did_change(params: lsp.DidChangeNotebookDocumentParams) -> None:
+    """LSP handler for notebookDocument/didChange request."""
+    nb = LSP_SERVER.workspace.get_notebook_document(
+        notebook_uri=params.notebook_document.uri
+    )
+    if nb is None:
+        return
+
+    change = params.change
+    # Re-lint cells whose text content changed.
+    if change.cells and change.cells.text_content:
+        for text_change in change.cells.text_content:
+            document = LSP_SERVER.workspace.get_text_document(
+                text_change.document.uri
+            )
+            diagnostics: list[lsp.Diagnostic] = _linting_helper(document)
+            LSP_SERVER.text_document_publish_diagnostics(
+                lsp.PublishDiagnosticsParams(uri=document.uri, diagnostics=diagnostics)
+            )
+
+    # Lint newly added cells (code cells only).
+    if change.cells and change.cells.structure and change.cells.structure.did_open:
+        code_cell_uris = {
+            cell.document
+            for cell in nb.cells
+            if cell.kind == lsp.NotebookCellKind.Code and cell.document is not None
+        }
+        for cell_doc in change.cells.structure.did_open:
+            if cell_doc.uri not in code_cell_uris:
+                continue
+            document = LSP_SERVER.workspace.get_text_document(cell_doc.uri)
+            diagnostics = _linting_helper(document)
+            LSP_SERVER.text_document_publish_diagnostics(
+                lsp.PublishDiagnosticsParams(uri=document.uri, diagnostics=diagnostics)
+            )
+
+    # Clear diagnostics for removed cells.
+    if change.cells and change.cells.structure and change.cells.structure.did_close:
+        for cell_doc in change.cells.structure.did_close:
+            LSP_SERVER.text_document_publish_diagnostics(
+                lsp.PublishDiagnosticsParams(uri=cell_doc.uri, diagnostics=[])
+            )
+
+
+@LSP_SERVER.feature(lsp.NOTEBOOK_DOCUMENT_DID_SAVE)
+def notebook_did_save(params: lsp.DidSaveNotebookDocumentParams) -> None:
+    """LSP handler for notebookDocument/didSave request."""
+    nb = LSP_SERVER.workspace.get_notebook_document(
+        notebook_uri=params.notebook_document.uri
+    )
+    if nb is None:
+        return
+    for cell in nb.cells:
+        if cell.kind != lsp.NotebookCellKind.Code or cell.document is None:
+            continue
+        document = LSP_SERVER.workspace.get_text_document(cell.document)
+        diagnostics: list[lsp.Diagnostic] = _linting_helper(document)
+        LSP_SERVER.text_document_publish_diagnostics(
+            lsp.PublishDiagnosticsParams(uri=document.uri, diagnostics=diagnostics)
+        )
+
+
+@LSP_SERVER.feature(lsp.NOTEBOOK_DOCUMENT_DID_CLOSE)
+def notebook_did_close(params: lsp.DidCloseNotebookDocumentParams) -> None:
+    """LSP handler for notebookDocument/didClose request."""
+    for cell_doc in params.cell_text_documents:
+        LSP_SERVER.text_document_publish_diagnostics(
+            lsp.PublishDiagnosticsParams(uri=cell_doc.uri, diagnostics=[])
+        )
+
+
+def _get_document_path(document: workspace.Document) -> str:
+    """Returns the file path for a document, handling notebook cell URIs.
+
+    Examples:
+        file:///path/to/file.py -> /path/to/file.py
+        vscode-notebook-cell:/path/to/notebook.ipynb#C00001 -> /path/to/notebook.ipynb
+    """
+    parsed = urllib.parse.urlparse(document.uri)
+    if parsed.scheme == "vscode-notebook-cell":
+        file_uri = urllib.parse.urlunparse(
+            ("file", parsed.netloc, parsed.path, parsed.params, parsed.query, "")
+        )
+        return uris.to_fs_path(file_uri)
+    return uris.to_fs_path(document.uri)
 
 
 def _linting_helper(document: workspace.Document) -> list[lsp.Diagnostic]:
@@ -436,12 +559,11 @@ def _run_tool_on_document(
     """
     if extra_args is None:
         extra_args = []
-    if str(document.uri).startswith("vscode-notebook-cell"):
-        # TODO: Decide on if you want to skip notebook cells.
-        # Skip notebook cells
-        return None
+    # TODO: Notebook cells are now supported via the notebookDocument/ handlers.
+    # If you want to customize notebook cell handling, update the notebook handlers above.
 
-    if utils.is_stdlib_file(document.path):
+    document_path = _get_document_path(document)
+    if utils.is_stdlib_file(document_path):
         # TODO: Decide on if you want to skip standard library files.
         # Skip standard library python files.
         return None
@@ -486,7 +608,7 @@ def _run_tool_on_document(
         # set use_stdin to False, or provide path, what ever is appropriate for your tool.
         argv += []
     else:
-        argv += [document.path]
+        argv += [document_path]
 
     if use_path:
         # This mode is used when running executables.
