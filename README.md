@@ -110,8 +110,6 @@ The `_get_document_path` helper resolves `vscode-notebook-cell:` URIs back to th
 - To restrict which cell languages are supported, update the `cells` list in `NOTEBOOK_SYNC_OPTIONS`.
 - To change the linting/formatting behavior per cell, update the individual handlers.
 
-See [microsoft/vscode-isort#565](https://github.com/microsoft/vscode-isort/pull/565) for a reference implementation of notebook support in a production extension.
-
 ## Building and Run the extension
 
 Run the `Debug Extension and Python` configuration form VS Code. That should build and debug the extension in host window.
