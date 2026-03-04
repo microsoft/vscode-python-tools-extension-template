@@ -269,6 +269,109 @@ def test_notebook_did_save():
         ), f"Expected diagnostics for {cell_uri!r}, got: {received}"
 
 
+def test_notebook_did_change_new_cell_kind_filter():
+    """Diagnostics are only published for newly added code cells, not markdown cells.
+
+    When a notebook change adds both a code cell and a markdown cell via
+    structure.did_open, only the code cell should receive diagnostics.
+    """
+    nb_path = str(constants.TEST_DATA / "sample1" / "sample.ipynb")
+    nb_uri = _make_notebook_uri(nb_path)
+    code_cell_id = "cell_code"
+    md_cell_id = "cell_md"
+    code_cell_uri = _make_cell_uri(nb_path, code_cell_id)
+    md_cell_uri = _make_cell_uri(nb_path, md_cell_id)
+
+    with session.LspSession() as ls_session:
+        ls_session.initialize(defaults.VSCODE_DEFAULT_INITIALIZE)
+
+        # Open an initially empty notebook
+        ls_session.notify_notebook_did_open(
+            {
+                "notebookDocument": {
+                    "uri": nb_uri,
+                    "notebookType": "jupyter-notebook",
+                    "version": 1,
+                    "metadata": {},
+                    "cells": [],
+                },
+                "cellTextDocuments": [],
+            }
+        )
+
+        received = []
+        done = Event()
+
+        def _handler(params):
+            received.append(params)
+            done.set()
+
+        ls_session.set_notification_callback(session.PUBLISH_DIAGNOSTICS, _handler)
+
+        # Add both a code cell (kind=2) and a markdown cell (kind=1) at once
+        ls_session.notify_notebook_did_change(
+            {
+                "notebookDocument": {
+                    "uri": nb_uri,
+                    "version": 2,
+                },
+                "change": {
+                    "metadata": None,
+                    "cells": {
+                        "structure": {
+                            "array": {
+                                "start": 0,
+                                "deleteCount": 0,
+                                "cells": [
+                                    {
+                                        "kind": 2,  # Code
+                                        "document": code_cell_uri,
+                                        "metadata": {},
+                                        "executionSummary": None,
+                                    },
+                                    {
+                                        "kind": 1,  # Markdown
+                                        "document": md_cell_uri,
+                                        "metadata": {},
+                                        "executionSummary": None,
+                                    },
+                                ],
+                            },
+                            "didOpen": [
+                                {
+                                    "uri": code_cell_uri,
+                                    "languageId": "python",
+                                    "version": 1,
+                                    "text": "x = 1\n",
+                                },
+                                {
+                                    "uri": md_cell_uri,
+                                    "languageId": "markdown",
+                                    "version": 1,
+                                    "text": "# heading\n",
+                                },
+                            ],
+                            "didClose": None,
+                        },
+                        "data": None,
+                        "textContent": None,
+                    },
+                },
+            }
+        )
+
+        done.wait(TIMEOUT)
+
+        # The code cell should receive diagnostics; the markdown cell must not.
+        uris_with_diagnostics = {r.get("uri") for r in received}
+        assert code_cell_uri in uris_with_diagnostics, (
+            f"Expected diagnostics for code cell {code_cell_uri!r}, got: {received}"
+        )
+        assert md_cell_uri not in uris_with_diagnostics, (
+            f"Markdown cell {md_cell_uri!r} should not receive diagnostics, got: {received}"
+        )
+
+
 def test_notebook_did_close():
     """Diagnostics are cleared for all cells when a notebook is closed.
 

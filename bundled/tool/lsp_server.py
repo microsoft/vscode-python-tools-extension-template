@@ -167,9 +167,17 @@ def notebook_did_change(params: lsp.DidChangeNotebookDocumentParams) -> None:
                 lsp.PublishDiagnosticsParams(uri=document.uri, diagnostics=diagnostics)
             )
 
-    # Lint newly added cells.
+    # Lint newly added cells (code cells only).
     if change.cells and change.cells.structure and change.cells.structure.did_open:
+        # Build a URI→cell map so we can check each cell's kind before linting.
+        cell_kind_by_uri = {
+            cell.document: cell.kind
+            for cell in nb.cells
+            if cell.document is not None
+        }
         for cell_doc in change.cells.structure.did_open:
+            if cell_kind_by_uri.get(cell_doc.uri) != lsp.NotebookCellKind.Code:
+                continue
             document = LSP_SERVER.workspace.get_text_document(cell_doc.uri)
             diagnostics = _linting_helper(document)
             LSP_SERVER.text_document_publish_diagnostics(
