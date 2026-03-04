@@ -226,7 +226,7 @@ def _get_document_path(document: workspace.Document) -> str:
         file:///path/to/file.py -> /path/to/file.py
         vscode-notebook-cell:/path/to/notebook.ipynb#C00001 -> /path/to/notebook.ipynb
     """
-    if not document.uri.startswith("file:"):
+    if document.uri.startswith("vscode-notebook-cell:"):
         return uris.to_fs_path(
             document.uri.split("#")[0].replace("vscode-notebook-cell:", "file:", 1)
         )

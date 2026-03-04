@@ -33,24 +33,6 @@ def _make_cell_uri(notebook_path: str, cell_id: str) -> str:
     return f"{cell_uri}#{cell_id}"
 
 
-def _collect_diagnostics(ls_session, count: int, timeout: int = TIMEOUT) -> list:
-    """Collect up to *count* publishDiagnostics notifications within *timeout* seconds.
-
-    Returns a list of params dicts, one per notification received.
-    """
-    collected = []
-    done = Event()
-
-    def _handler(params):
-        collected.append(params)
-        if len(collected) >= count:
-            done.set()
-
-    ls_session.set_notification_callback(session.PUBLISH_DIAGNOSTICS, _handler)
-    done.wait(timeout)
-    return collected
-
-
 def test_notebook_did_open():
     """Diagnostics are published for each code cell when a notebook is opened.
 
