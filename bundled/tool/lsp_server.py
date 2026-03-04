@@ -170,14 +170,13 @@ def notebook_did_change(params: lsp.DidChangeNotebookDocumentParams) -> None:
 
     # Lint newly added cells (code cells only).
     if change.cells and change.cells.structure and change.cells.structure.did_open:
-        # Build a URI→cell map so we can check each cell's kind before linting.
-        cell_kind_by_uri = {
-            cell.document: cell.kind
+        code_cell_uris = {
+            cell.document
             for cell in nb.cells
-            if cell.document is not None
+            if cell.kind == lsp.NotebookCellKind.Code and cell.document is not None
         }
         for cell_doc in change.cells.structure.did_open:
-            if cell_kind_by_uri.get(cell_doc.uri) != lsp.NotebookCellKind.Code:
+            if cell_doc.uri not in code_cell_uris:
                 continue
             document = LSP_SERVER.workspace.get_text_document(cell_doc.uri)
             diagnostics = _linting_helper(document)
@@ -229,7 +228,9 @@ def _get_document_path(document: workspace.Document) -> str:
     """
     parsed = urllib.parse.urlparse(document.uri)
     if parsed.scheme == "vscode-notebook-cell":
-        file_uri = urllib.parse.urlunparse(parsed._replace(scheme="file", fragment=""))
+        file_uri = urllib.parse.urlunparse(
+            ("file", parsed.netloc, parsed.path, parsed.params, parsed.query, "")
+        )
         return uris.to_fs_path(file_uri)
     return uris.to_fs_path(document.uri)
 
