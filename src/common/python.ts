@@ -124,11 +124,11 @@ export async function runPythonExtensionCommand(command: string, ...rest: any[])
 
 export function checkVersion(resolved: ResolvedEnvironment | undefined): boolean {
     const version = resolved?.version;
-    if (version?.major === 3 && version?.minor >= 8) {
+    if (version?.major === 3 && version?.minor >= 10) {
         return true;
     }
     traceError(`Python version ${version?.major}.${version?.minor} is not supported.`);
     traceError(`Selected python path: ${resolved?.executable.uri?.fsPath}`);
-    traceError('Supported versions are 3.8 and above.');
+    traceError('Supported versions are 3.10 and above.');
     return false;
 }
