@@ -41,21 +41,32 @@ def _setup_mocks():
 
     mock_uris = types.ModuleType("pygls.uris")
     mock_uris.from_fs_path = lambda p: "file://" + p
+    mock_uris.to_fs_path = lambda u: u.replace("file://", "")
 
     mock_lsp = types.ModuleType("lsprotocol.types")
     for _name in [
         "TEXT_DOCUMENT_DID_OPEN", "TEXT_DOCUMENT_DID_SAVE", "TEXT_DOCUMENT_DID_CLOSE",
         "TEXT_DOCUMENT_FORMATTING", "INITIALIZE", "EXIT", "SHUTDOWN",
+        "NOTEBOOK_DOCUMENT_DID_OPEN", "NOTEBOOK_DOCUMENT_DID_CHANGE",
+        "NOTEBOOK_DOCUMENT_DID_SAVE", "NOTEBOOK_DOCUMENT_DID_CLOSE",
     ]:
         setattr(mock_lsp, _name, _name)
     for _name in [
         "Diagnostic", "DiagnosticSeverity", "DidCloseTextDocumentParams",
         "DidOpenTextDocumentParams", "DidSaveTextDocumentParams",
         "DocumentFormattingParams", "InitializeParams", "Position", "Range", "TextEdit",
-        "PublishDiagnosticsParams", "LogMessageParams", "ShowMessageParams",
+        "DidOpenNotebookDocumentParams", "DidChangeNotebookDocumentParams",
+        "DidSaveNotebookDocumentParams", "DidCloseNotebookDocumentParams",
+        "NotebookCellLanguage", "NotebookDocumentFilterWithNotebook",
+        "NotebookDocumentSyncOptions", "PublishDiagnosticsParams",
     ]:
-        setattr(mock_lsp, _name, type(_name, (), {}))
+        def _make_stub(name):
+            def __init__(self, *args, **kwargs):
+                pass
+            return type(name, (), {"__init__": __init__})
+        setattr(mock_lsp, _name, _make_stub(_name))
     mock_lsp.MessageType = type("MessageType", (), {"Log": 4, "Error": 1, "Warning": 2, "Info": 3})
+    mock_lsp.NotebookCellKind = type("NotebookCellKind", (), {"Code": 2})
 
     for _mod_name, _mod in [
         ("pygls", types.ModuleType("pygls")),
