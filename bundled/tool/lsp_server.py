@@ -39,8 +39,9 @@ update_sys_path(
 # pylint: disable=wrong-import-position,import-error
 import lsp_jsonrpc as jsonrpc
 import lsp_utils as utils
-import lsprotocol.types as lsp
-from pygls import server, uris, workspace
+from lsprotocol import types as lsp
+from pygls import uris, workspace
+from pygls.lsp.server import LanguageServer
 
 WORKSPACE_SETTINGS = {}
 GLOBAL_SETTINGS = {}
@@ -108,25 +109,31 @@ TOOL_ARGS = []  # default arguments always passed to your tool.
 @LSP_SERVER.feature(lsp.TEXT_DOCUMENT_DID_OPEN)
 def did_open(params: lsp.DidOpenTextDocumentParams) -> None:
     """LSP handler for textDocument/didOpen request."""
-    document = LSP_SERVER.workspace.get_document(params.text_document.uri)
+    document = LSP_SERVER.workspace.get_text_document(params.text_document.uri)
     diagnostics: list[lsp.Diagnostic] = _linting_helper(document)
-    LSP_SERVER.publish_diagnostics(document.uri, diagnostics)
+    LSP_SERVER.text_document_publish_diagnostics(
+        lsp.PublishDiagnosticsParams(uri=document.uri, diagnostics=diagnostics)
+    )
 
 
 @LSP_SERVER.feature(lsp.TEXT_DOCUMENT_DID_SAVE)
 def did_save(params: lsp.DidSaveTextDocumentParams) -> None:
     """LSP handler for textDocument/didSave request."""
-    document = LSP_SERVER.workspace.get_document(params.text_document.uri)
+    document = LSP_SERVER.workspace.get_text_document(params.text_document.uri)
     diagnostics: list[lsp.Diagnostic] = _linting_helper(document)
-    LSP_SERVER.publish_diagnostics(document.uri, diagnostics)
+    LSP_SERVER.text_document_publish_diagnostics(
+        lsp.PublishDiagnosticsParams(uri=document.uri, diagnostics=diagnostics)
+    )
 
 
 @LSP_SERVER.feature(lsp.TEXT_DOCUMENT_DID_CLOSE)
 def did_close(params: lsp.DidCloseTextDocumentParams) -> None:
     """LSP handler for textDocument/didClose request."""
-    document = LSP_SERVER.workspace.get_document(params.text_document.uri)
+    document = LSP_SERVER.workspace.get_text_document(params.text_document.uri)
     # Publishing empty diagnostics to clear the entries for this file.
-    LSP_SERVER.publish_diagnostics(document.uri, [])
+    LSP_SERVER.text_document_publish_diagnostics(
+        lsp.PublishDiagnosticsParams(uri=document.uri, diagnostics=[])
+    )
 
 
 @LSP_SERVER.feature(lsp.NOTEBOOK_DOCUMENT_DID_OPEN)
@@ -323,7 +330,7 @@ def formatting(params: lsp.DocumentFormattingParams) -> list[lsp.TextEdit] | Non
     # formatting support on save. You have to return an array of lsp.TextEdit
     # objects, to provide your formatted results.
 
-    document = LSP_SERVER.workspace.get_document(params.text_document.uri)
+    document = LSP_SERVER.workspace.get_text_document(params.text_document.uri)
     edits = _formatting_helper(document)
     if edits:
         return edits
@@ -333,7 +340,7 @@ def formatting(params: lsp.DocumentFormattingParams) -> list[lsp.TextEdit] | Non
     return None
 
 
-def _formatting_helper(document: workspace.Document) -> list[lsp.TextEdit] | None:
+def _formatting_helper(document: workspace.TextDocument) -> list[lsp.TextEdit] | None:
     # TODO: For formatting on save support the formatter you use must support
     # formatting via stdin.
     # Read, and update_run_tool_on_document and _run_tool functions as needed
@@ -363,7 +370,7 @@ def _get_line_endings(lines: list[str]) -> str:
         return None
 
 
-def _match_line_endings(document: workspace.Document, text: str) -> str:
+def _match_line_endings(document: workspace.TextDocument, text: str) -> str:
     """Ensures that the edited text line endings matches the document line endings."""
     expected = _get_line_endings(document.source.splitlines(keepends=True))
     actual = _get_line_endings(text.splitlines(keepends=True))
@@ -412,7 +419,7 @@ def on_shutdown(_params: Optional[Any] = None) -> None:
     jsonrpc.shutdown_json_rpc()
 
 
-def get_cwd(settings: dict, document: Optional[workspace.Document]) -> str:
+def get_cwd(settings: dict, document: Optional[workspace.TextDocument]) -> str:
     """Returns the working directory for running the tool.
 
     Resolves the following VS Code file-related variable substitutions when
@@ -512,7 +519,7 @@ def _get_settings_by_path(file_path: pathlib.Path):
     return setting_values[0]
 
 
-def _get_document_key(document: workspace.Document):
+def _get_document_key(document: workspace.TextDocument):
     if WORKSPACE_SETTINGS:
         document_workspace = pathlib.Path(document.path)
         workspaces = {s["workspaceFS"] for s in WORKSPACE_SETTINGS.values()}
@@ -526,7 +533,7 @@ def _get_document_key(document: workspace.Document):
     return None
 
 
-def _get_settings_by_document(document: workspace.Document | None):
+def _get_settings_by_document(document: workspace.TextDocument | None):
     if document is None or document.path is None:
         return list(WORKSPACE_SETTINGS.values())[0]
 
@@ -548,7 +555,7 @@ def _get_settings_by_document(document: workspace.Document | None):
 # Internal execution APIs.
 # *****************************************************
 def _run_tool_on_document(
-    document: workspace.Document,
+    document: workspace.TextDocument,
     use_stdin: bool = False,
     extra_args: Optional[Sequence[str]] = None,
 ) -> utils.RunResult | None:
@@ -757,25 +764,37 @@ def _run_tool(extra_args: Sequence[str]) -> utils.RunResult:
 def log_to_output(
     message: str, msg_type: lsp.MessageType = lsp.MessageType.Log
 ) -> None:
-    LSP_SERVER.show_message_log(message, msg_type)
+    LSP_SERVER.window_log_message(lsp.LogMessageParams(type=msg_type, message=message))
 
 
 def log_error(message: str) -> None:
-    LSP_SERVER.show_message_log(message, lsp.MessageType.Error)
+    LSP_SERVER.window_log_message(
+        lsp.LogMessageParams(type=lsp.MessageType.Error, message=message)
+    )
     if os.getenv("LS_SHOW_NOTIFICATION", "off") in ["onError", "onWarning", "always"]:
-        LSP_SERVER.show_message(message, lsp.MessageType.Error)
+        LSP_SERVER.window_show_message(
+            lsp.ShowMessageParams(type=lsp.MessageType.Error, message=message)
+        )
 
 
 def log_warning(message: str) -> None:
-    LSP_SERVER.show_message_log(message, lsp.MessageType.Warning)
+    LSP_SERVER.window_log_message(
+        lsp.LogMessageParams(type=lsp.MessageType.Warning, message=message)
+    )
     if os.getenv("LS_SHOW_NOTIFICATION", "off") in ["onWarning", "always"]:
-        LSP_SERVER.show_message(message, lsp.MessageType.Warning)
+        LSP_SERVER.window_show_message(
+            lsp.ShowMessageParams(type=lsp.MessageType.Warning, message=message)
+        )
 
 
 def log_always(message: str) -> None:
-    LSP_SERVER.show_message_log(message, lsp.MessageType.Info)
+    LSP_SERVER.window_log_message(
+        lsp.LogMessageParams(type=lsp.MessageType.Info, message=message)
+    )
     if os.getenv("LS_SHOW_NOTIFICATION", "off") in ["always"]:
-        LSP_SERVER.show_message(message, lsp.MessageType.Info)
+        LSP_SERVER.window_show_message(
+            lsp.ShowMessageParams(type=lsp.MessageType.Info, message=message)
+        )
 
 
 # *****************************************************

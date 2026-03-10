@@ -2,10 +2,10 @@
 // Licensed under the MIT License.
 
 /* eslint-disable @typescript-eslint/naming-convention */
-import { commands, Disposable, Event, EventEmitter, extensions, Uri } from 'vscode';
+import { commands, Disposable, Event, EventEmitter, Uri } from 'vscode';
 import { traceError, traceLog } from './log/logging';
 import { PythonExtension, ResolvedEnvironment } from '@vscode/python-extension';
-import { PythonEnvironmentsAPI } from '../typings/pythonEnvironments';
+import { PythonEnvironmentApi, PythonEnvironments } from '@vscode/python-environments';
 
 export interface IInterpreterDetails {
     path?: string[];
@@ -24,21 +24,16 @@ async function getPythonExtensionAPI(): Promise<PythonExtension | undefined> {
     return _api;
 }
 
-const PYTHON_ENVIRONMENTS_EXTENSION_ID = 'ms-python.vscode-python-envs';
-
-let _envsApi: PythonEnvironmentsAPI | undefined;
-async function getEnvironmentsExtensionAPI(): Promise<PythonEnvironmentsAPI | undefined> {
+let _envsApi: PythonEnvironmentApi | undefined;
+async function getEnvironmentsExtensionAPI(): Promise<PythonEnvironmentApi | undefined> {
     if (_envsApi) {
         return _envsApi;
     }
-    const extension = extensions.getExtension(PYTHON_ENVIRONMENTS_EXTENSION_ID);
-    if (!extension) {
+    try {
+        _envsApi = await PythonEnvironments.api();
+    } catch {
         return undefined;
     }
-    if (!extension.isActive) {
-        await extension.activate();
-    }
-    _envsApi = extension.exports as PythonEnvironmentsAPI;
     return _envsApi;
 }
 
@@ -70,7 +65,8 @@ export async function initializePython(disposables: Disposable[]): Promise<void>
         if (api) {
             disposables.push(
                 api.environments.onDidChangeActiveEnvironmentPath((e) => {
-                    onDidChangePythonInterpreterEvent.fire({ path: [e.path], resource: e.resource?.uri });
+                    const resource = e.resource instanceof Uri ? e.resource : e.resource?.uri;
+                    onDidChangePythonInterpreterEvent.fire({ path: [e.path], resource });
                 }),
             );
 
@@ -124,11 +120,11 @@ export async function runPythonExtensionCommand(command: string, ...rest: any[])
 
 export function checkVersion(resolved: ResolvedEnvironment | undefined): boolean {
     const version = resolved?.version;
-    if (version?.major === 3 && version?.minor >= 8) {
+    if (version?.major === 3 && version?.minor >= 10) {
         return true;
     }
     traceError(`Python version ${version?.major}.${version?.minor} is not supported.`);
     traceError(`Selected python path: ${resolved?.executable.uri?.fsPath}`);
-    traceError('Supported versions are 3.8 and above.');
+    traceError('Supported versions are 3.10 and above.');
     return false;
 }

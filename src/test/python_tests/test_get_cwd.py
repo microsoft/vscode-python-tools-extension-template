@@ -21,17 +21,23 @@ def _setup_mocks():
         def command(self, *args, **kwargs):
             return lambda f: f
 
-        def show_message_log(self, *args, **kwargs):
+        def window_log_message(self, *args, **kwargs):
             pass
 
-        def show_message(self, *args, **kwargs):
+        def window_show_message(self, *args, **kwargs):
             pass
 
     mock_server = types.ModuleType("pygls.server")
     mock_server.LanguageServer = _MockLS
 
+    mock_lsp_server = types.ModuleType("pygls.lsp.server")
+    mock_lsp_server.LanguageServer = _MockLS
+
+    mock_lsp_mod = types.ModuleType("pygls.lsp")
+    mock_lsp_mod.server = mock_lsp_server
+
     mock_workspace = types.ModuleType("pygls.workspace")
-    mock_workspace.Document = type("Document", (), {"path": None})
+    mock_workspace.TextDocument = type("TextDocument", (), {"path": None})
 
     mock_uris = types.ModuleType("pygls.uris")
     mock_uris.from_fs_path = lambda p: "file://" + p
@@ -65,6 +71,8 @@ def _setup_mocks():
     for _mod_name, _mod in [
         ("pygls", types.ModuleType("pygls")),
         ("pygls.server", mock_server),
+        ("pygls.lsp", mock_lsp_mod),
+        ("pygls.lsp.server", mock_lsp_server),
         ("pygls.workspace", mock_workspace),
         ("pygls.uris", mock_uris),
         ("lsprotocol", types.ModuleType("lsprotocol")),
