@@ -1,6 +1,7 @@
 # Copyright (c) Microsoft Corporation. All rights reserved.
 # Licensed under the MIT License.
 """Implementation of tool support over LSP."""
+
 from __future__ import annotations
 
 import copy
@@ -15,9 +16,26 @@ import urllib.parse
 from typing import Any, Optional, Sequence
 
 
+def _lsp_feature_safe_handle(func):
+    """Decorator to wrap LSP handlers in a try except block to catch all
+    exceptions and log them instead of crashing the server."""
+
+    def wrapper(*args, **kwargs):
+        try:
+            return func(*args, **kwargs)
+        except Exception:  # pylint: disable=broad-except
+            log_error(
+                f"Exception handling request {func.__name__}:\r\n{traceback.format_exc(chain=True)}"
+            )
+
+    return wrapper
+
+
 # **********************************************************
 # Update sys.path before importing any bundled libraries.
 # **********************************************************
+
+
 def update_sys_path(path_to_add: str, strategy: str) -> None:
     """Add given path to `sys.path`."""
     if path_to_add not in sys.path and os.path.isdir(path_to_add):
@@ -107,6 +125,7 @@ TOOL_ARGS = []  # default arguments always passed to your tool.
 
 
 @LSP_SERVER.feature(lsp.TEXT_DOCUMENT_DID_OPEN)
+@_lsp_feature_safe_handle
 def did_open(params: lsp.DidOpenTextDocumentParams) -> None:
     """LSP handler for textDocument/didOpen request."""
     document = LSP_SERVER.workspace.get_text_document(params.text_document.uri)
@@ -117,6 +136,7 @@ def did_open(params: lsp.DidOpenTextDocumentParams) -> None:
 
 
 @LSP_SERVER.feature(lsp.TEXT_DOCUMENT_DID_SAVE)
+@_lsp_feature_safe_handle
 def did_save(params: lsp.DidSaveTextDocumentParams) -> None:
     """LSP handler for textDocument/didSave request."""
     document = LSP_SERVER.workspace.get_text_document(params.text_document.uri)
@@ -127,6 +147,7 @@ def did_save(params: lsp.DidSaveTextDocumentParams) -> None:
 
 
 @LSP_SERVER.feature(lsp.TEXT_DOCUMENT_DID_CLOSE)
+@_lsp_feature_safe_handle
 def did_close(params: lsp.DidCloseTextDocumentParams) -> None:
     """LSP handler for textDocument/didClose request."""
     document = LSP_SERVER.workspace.get_text_document(params.text_document.uri)
@@ -137,6 +158,7 @@ def did_close(params: lsp.DidCloseTextDocumentParams) -> None:
 
 
 @LSP_SERVER.feature(lsp.NOTEBOOK_DOCUMENT_DID_OPEN)
+@_lsp_feature_safe_handle
 def notebook_did_open(params: lsp.DidOpenNotebookDocumentParams) -> None:
     """LSP handler for notebookDocument/didOpen request."""
     nb = LSP_SERVER.workspace.get_notebook_document(
@@ -155,6 +177,7 @@ def notebook_did_open(params: lsp.DidOpenNotebookDocumentParams) -> None:
 
 
 @LSP_SERVER.feature(lsp.NOTEBOOK_DOCUMENT_DID_CHANGE)
+@_lsp_feature_safe_handle
 def notebook_did_change(params: lsp.DidChangeNotebookDocumentParams) -> None:
     """LSP handler for notebookDocument/didChange request."""
     nb = LSP_SERVER.workspace.get_notebook_document(
@@ -167,9 +190,7 @@ def notebook_did_change(params: lsp.DidChangeNotebookDocumentParams) -> None:
     # Re-lint cells whose text content changed.
     if change.cells and change.cells.text_content:
         for text_change in change.cells.text_content:
-            document = LSP_SERVER.workspace.get_text_document(
-                text_change.document.uri
-            )
+            document = LSP_SERVER.workspace.get_text_document(text_change.document.uri)
             diagnostics: list[lsp.Diagnostic] = _linting_helper(document)
             LSP_SERVER.text_document_publish_diagnostics(
                 lsp.PublishDiagnosticsParams(uri=document.uri, diagnostics=diagnostics)
@@ -200,6 +221,7 @@ def notebook_did_change(params: lsp.DidChangeNotebookDocumentParams) -> None:
 
 
 @LSP_SERVER.feature(lsp.NOTEBOOK_DOCUMENT_DID_SAVE)
+@_lsp_feature_safe_handle
 def notebook_did_save(params: lsp.DidSaveNotebookDocumentParams) -> None:
     """LSP handler for notebookDocument/didSave request."""
     nb = LSP_SERVER.workspace.get_notebook_document(
@@ -218,6 +240,7 @@ def notebook_did_save(params: lsp.DidSaveNotebookDocumentParams) -> None:
 
 
 @LSP_SERVER.feature(lsp.NOTEBOOK_DOCUMENT_DID_CLOSE)
+@_lsp_feature_safe_handle
 def notebook_did_close(params: lsp.DidCloseNotebookDocumentParams) -> None:
     """LSP handler for notebookDocument/didClose request."""
     for cell_doc in params.cell_text_documents:
@@ -324,6 +347,7 @@ def _get_severity(*_codes: list[str]) -> lsp.DiagnosticSeverity:
 
 
 @LSP_SERVER.feature(lsp.TEXT_DOCUMENT_FORMATTING)
+@_lsp_feature_safe_handle
 def formatting(params: lsp.DocumentFormattingParams) -> list[lsp.TextEdit] | None:
     """LSP handler for textDocument/formatting request."""
     # If your tool is a formatter you can use this handler to provide
@@ -388,6 +412,7 @@ def _match_line_endings(document: workspace.TextDocument, text: str) -> str:
 # Required Language Server Initialization and Exit handlers.
 # **********************************************************
 @LSP_SERVER.feature(lsp.INITIALIZE)
+@_lsp_feature_safe_handle
 def initialize(params: lsp.InitializeParams) -> None:
     """LSP handler for initialize request."""
     log_to_output(f"CWD Server: {os.getcwd()}")
@@ -408,12 +433,14 @@ def initialize(params: lsp.InitializeParams) -> None:
 
 
 @LSP_SERVER.feature(lsp.EXIT)
+@_lsp_feature_safe_handle
 def on_exit(_params: Optional[Any] = None) -> None:
     """Handle clean up on exit."""
     jsonrpc.shutdown_json_rpc()
 
 
 @LSP_SERVER.feature(lsp.SHUTDOWN)
+@_lsp_feature_safe_handle
 def on_shutdown(_params: Optional[Any] = None) -> None:
     """Handle clean up on shutdown."""
     jsonrpc.shutdown_json_rpc()
