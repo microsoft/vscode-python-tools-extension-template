@@ -5,6 +5,7 @@
 from __future__ import annotations
 
 import copy
+import functools
 import json
 import os
 import pathlib
@@ -20,6 +21,7 @@ def _lsp_feature_safe_handle(func):
     """Decorator to wrap LSP handlers in a try except block to catch all
     exceptions and log them instead of crashing the server."""
 
+    @functools.wraps(func)
     def wrapper(*args, **kwargs):
         try:
             return func(*args, **kwargs)
