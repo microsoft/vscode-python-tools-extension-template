@@ -25,9 +25,9 @@ packaging==26.0 \
     --hash=sha256:00243ae351a257117b6a241061796684b084ed1c516a08c48a3f7e147a9d80b4 \
     --hash=sha256:b36f1fef9334a5588b4166f8bcd26a14e521f2b55e6b9de3aaa80d3ff7a37529
     # via -r requirements.in
-pygls==2.1.0 \
-    --hash=sha256:3f2247717deeda9174d9c2f76130ff4d3e0e0788a5be47212df248d163453aac \
-    --hash=sha256:cfa8443561488cb15b59f6ce64cabfa37d79753f7120c1bf729419246bf747f9
+pygls==2.1.1 \
+    --hash=sha256:1da03ba9053201bb337dcdd8d121df70feb2a91e1a0dcc74de5da79755b1a201 \
+    --hash=sha256:510a6dea2476177230c7d851125e5948efdf3fdb9ebfd8543fc434972f8faed4
     # via -r requirements.in
 typing-extensions==4.15.0 \
     --hash=sha256:0cea48d173cc12fa28ecabc3b837ea3cf6f38c6d1136f85cbaaf598984861466 \
