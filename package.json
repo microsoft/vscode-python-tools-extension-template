@@ -144,7 +144,7 @@
     "dependencies": {
         "@vscode/python-environments": "^1.0.0",
         "@vscode/python-extension": "^1.0.6",
-        "fs-extra": "^11.2.0",
+        "fs-extra": "^11.3.4",
         "vscode-languageclient": "^8.1.0"
     },
     "devDependencies": {
@@ -160,8 +160,11 @@
         "glob": "^13.0.6",
         "prettier": "^3.8.1",
         "ts-loader": "^9.5.4",
-        "typescript": "^5.3.3",
+        "typescript": "^5.9.3",
         "webpack": "^5.105.4",
-        "webpack-cli": "^5.1.4"
+        "webpack-cli": "^7.0.2"
+    },
+    "overrides": {
+        "@types/eslint-scope": "file:./types/eslint-scope"
     }
 }

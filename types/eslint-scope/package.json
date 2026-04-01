@@ -1,0 +1,7 @@
+{
+    "name": "@types/eslint-scope",
+    "version": "99.0.0",
+    "description": "Empty stub to prevent @types/eslint-scope conflict with ESLint v10 bundled types",
+    "main": "",
+    "types": "index.d.ts"
+}
