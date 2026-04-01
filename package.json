@@ -58,7 +58,7 @@
         "compile-tests": "tsc -p . --outDir out",
         "watch-tests": "tsc -p . -w --outDir out",
         "pretest": "npm run compile-tests && npm run compile && npm run lint",
-        "lint": "eslint src --ext ts",
+        "lint": "eslint src",
         "format-check": "prettier --check 'src/**/*.ts' 'build/**/*.yml' '.github/**/*.yml'",
         "test": "node ./out/test/runTest.js",
         "vsce-package": "vsce package -o <pytool-module>.vsix"
@@ -156,7 +156,7 @@
         "@typescript-eslint/parser": "^8.57.0",
         "@vscode/test-electron": "^2.5.2",
         "@vscode/vsce": "^3.7.1",
-        "eslint": "^8.56.0",
+        "eslint": "^10.1.0",
         "glob": "^13.0.6",
         "prettier": "^3.8.1",
         "ts-loader": "^9.5.4",
